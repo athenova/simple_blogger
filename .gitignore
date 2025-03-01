@@ -2,3 +2,4 @@ build
 dist
 simple_blogger.egg-info
 *.pyc
+test.py

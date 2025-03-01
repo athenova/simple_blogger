@@ -92,10 +92,11 @@ class CommonBlogger():
                 tasks = json.load(open(self.backlog_file, "rt", encoding="UTF-8"))
                 index_start = max(tasks, key=lambda task: task['index'])['index'] + 1
             else:
+                tasks = []
                 index_start = 1
-            for _, _, files in os.walk(self.files_dir):
+            for root, _, files in os.walk(self.ideas_dir, ):
                 for i, file in enumerate(files):
-                    input_file = f"{self.files_dir}/{file}"
+                    input_file = f"{root}/{file}"
                     data = json.load(open(input_file, "rt", encoding="UTF-8"))
                     for item in data:
                         task = self.task_converter(item)
