@@ -179,7 +179,7 @@ class CommonBlogger():
             client = OpenAI(api_key=os.environ.get(self.text_ai_token_name), base_url=self.text_base_url)
             text_prompt = task[atr_name]
             text = client.chat.completions.create(
-                        model=self.ai_image_model,
+                        model=self.ai_text_model,
                         messages=[
                             { "role": "system", "content": self.system_prompt(task) },
                             { "role": "user", "content": text_prompt },
