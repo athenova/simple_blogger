@@ -30,6 +30,9 @@ class CommonBlogger():
                  , text_ai_token_name='DEEPSEEK_API_KEY'
                  , text_base_url='https://api.deepseek.com'
                  , shuffle_tasks=True
+                 , task_post_processor=None
+                 , task_extractor=None
+                 , example_task_creator=None
                  ):
         self.review_chat_id = review_chat_id
         self.project_name = project_name if project_name is not None else os.path.basename(os.getcwd())
@@ -47,10 +50,13 @@ class CommonBlogger():
         self.days_between_posts = days_between_posts
         self.ai_image_model = ai_image_model
         self.ai_text_model = ai_text_model
-        self.task_converter = task_converter if task_converter is not None else self.__simple_task_converter
-        self.system_prompt = system_prompt if system_prompt is not None else self.__simple_system_prompt
-        self.catagory_folder_getter = catagory_folder_getter if catagory_folder_getter is not None else self.__get_category_folder
-        self.topic_folder_getter = topic_folder_getter if topic_folder_getter is not None else self.__get_topic_folder
+        self.example_task_creator = example_task_creator if example_task_creator is not None else self._example_task_creator
+        self.task_converter = task_converter if task_converter is not None else self._task_converter
+        self.system_prompt = system_prompt if system_prompt is not None else self._system_prompt
+        self.catagory_folder_getter = catagory_folder_getter if catagory_folder_getter is not None else self._get_category_folder
+        self.topic_folder_getter = topic_folder_getter if topic_folder_getter is not None else self._get_topic_folder
+        self.task_post_processor = task_post_processor if task_post_processor is not None else self._task_post_processor
+        self.task_extractor = task_extractor if task_extractor is not None else self._task_extractor
         self.blogger_bot_token_name = blogger_bot_token_name
         self.text_ai_token_name = text_ai_token_name
         self.text_base_url = text_base_url
@@ -63,29 +69,6 @@ class CommonBlogger():
         if not os.path.exists(self.processed_dir): os.mkdir(self.processed_dir)
         self.__init_simple()
         
-    def __init_simple(self):
-        ideas_file = f"{self.ideas_dir}/{self.project_name}.json"
-        if not os.path.exists(ideas_file):
-            simple_ideas = [ { "topic": "Post topic", "category": "Post Category" } ]
-            json.dump(simple_ideas, open(ideas_file, 'wt', encoding='UTF-8'), indent=4, ensure_ascii=False)
-
-    def __simple_system_prompt(self, _):
-        return f'You are a famous blogger with {1_000_000} followers'
-
-    def __simple_task_converter(self, item):
-        return { 
-                "topic": item['topic'],
-                "category": f"{item['category']}",
-                "topic_image": f"Draw a picture, inspired by '{item['topic']}' from '{item['category']}'",
-                "topic_prompt": f"Write about '{item['topic']}' from '{item['category']}', use less than {self.topic_word_limit} words",
-            }
-    
-    def __get_category_folder(self, task):
-        return task['category']
-                
-    def __get_topic_folder(self, task):
-        return task['topic']
-
     def push(self):
         if not os.path.exists(self.tasks_file):
             if os.path.exists(self.backlog_file):
@@ -110,10 +93,7 @@ class CommonBlogger():
                 random.seed(year)
                 random.shuffle(tasks)
 
-            curr_date = self.first_post_date
-            for task in tasks:
-                task["date"] = curr_date.strftime("%Y-%m-%d")
-                curr_date += self.days_between_posts
+            self.task_post_processor(tasks, self.first_post_date, self.days_between_posts)
 
             json.dump(tasks, open(self.tasks_file, 'wt', encoding='UTF-8'), indent=4, ensure_ascii=False)
             if os.path.exists(self.backlog_file):
@@ -190,19 +170,18 @@ class CommonBlogger():
     def review(self, type='topic'):
         self.send(type, image_gen=True, text_gen=True, chat_id=self.review_chat_id, days_offset=self.days_to_review)
 
+
     def send(self, type='topic', image_gen=False, text_gen=False, chat_id=None, days_offset=None):
         chat_id = chat_id if chat_id is not None else self.production_chat_id
-        days_offset = days_offset if days_offset is not None else timedelta.days(days=0)
-        check_date = date.today() + days_offset
         tasks = json.load(open(self.tasks_file, 'rt', encoding='UTF-8'))
-        for task in tasks:
-            if task["date"] == check_date.strftime('%Y-%m-%d'):
-                try:
-                    if image_gen: self.gen_image(task, type)
-                    if text_gen: self.gen_text(task, type)
-                except Exception as e:
-                    self.__send_error(str(e))
-                self.__send(task, type, chat_id)
+        task = self.task_extractor(tasks, days_offset)
+        if task is not None:
+            try:
+                if image_gen: self.gen_image(task, type)
+                if text_gen: self.gen_text(task, type)
+            except Exception as e:
+                self.__send_error(str(e))
+            self.__send(task, type, chat_id)
 
     def __send(self, task, type, chat_id):
         folder_name = self.__init_task_dir(task)
@@ -221,4 +200,42 @@ class CommonBlogger():
     def __send_error(self, message):
         bot = telebot.TeleBot(os.environ.get(self.blogger_bot_token_name))
         bot.send_message(chat_id=self.review_chat_id, text=message)
-            
+
+    def __init_simple(self):
+        ideas_file = f"{self.ideas_dir}/{self.project_name}.json"
+        if not os.path.exists(ideas_file):
+            simple_ideas = self.example_task_creator()
+            json.dump(simple_ideas, open(ideas_file, 'wt', encoding='UTF-8'), indent=4, ensure_ascii=False)
+
+    def _example_task_creator(self):
+        return [ { "topic": "Post topic", "category": "Post Category" } ]
+
+    def _system_prompt(self, _):
+        return f'You are a famous blogger with {1_000_000} followers'
+
+    def _task_converter(self, item):
+        return { 
+                "topic": item['topic'],
+                "category": f"{item['category']}",
+                "topic_image": f"Draw a picture, inspired by '{item['topic']}' from '{item['category']}'",
+                "topic_prompt": f"Write about '{item['topic']}' from '{item['category']}', use less than {self.topic_word_limit} words",
+            }
+    
+    def _get_category_folder(self, task):
+        return task['category']
+                
+    def _get_topic_folder(self, task):
+        return task['topic']
+
+    def _task_post_processor(self, tasks, first_post_date, days_between_posts):
+        curr_date = first_post_date
+        for task in tasks:
+            task["date"] = curr_date.strftime("%Y-%m-%d")
+            curr_date += days_between_posts
+
+    def _task_extractor(self, tasks, days_offset=None):
+        days_offset = days_offset if days_offset is not None else timedelta(days=0)
+        check_date = date.today() + days_offset
+        for task in tasks:
+            if task["date"] == check_date.strftime('%Y-%m-%d'): return task
+        return None
