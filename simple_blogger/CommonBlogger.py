@@ -123,14 +123,14 @@ class CommonBlogger():
         if not os.path.exists(folder_name): os.mkdir(folder_name)
         return folder_name
 
-    def gen_image(self, task, type='topic'):
+    def gen_image(self, task, type='topic', force_regen=False):
         folder_name = self.__init_task_dir(task)
 
         temp_image_file = f"{folder_name}/{type}.webp"
         image_file_name = f"{folder_name}/{type}.png"
         attr_name = f"{type}_image"
 
-        if not os.path.exists(temp_image_file) and not os.path.exists(image_file_name):
+        if force_regen or (not os.path.exists(temp_image_file) and not os.path.exists(image_file_name)):
             client = OpenAI()
             image_prompt = task[attr_name]
             image_url = client.images.generate(
@@ -144,18 +144,18 @@ class CommonBlogger():
             with open(temp_image_file, 'wb') as f:
                 f.write(response.content)
             
-        if os.path.exists(temp_image_file) and not os.path.exists(image_file_name):
+        if os.path.exists(temp_image_file) and (force_regen or not os.path.exists(image_file_name)):
             webp_image = Image.open(temp_image_file)
             png_image = webp_image.convert("RGBA")
             png_image.save(image_file_name)
             os.remove(temp_image_file)
     
-    def gen_text(self, task, type='topic'):
+    def gen_text(self, task, type='topic', force_regen=False):
         folder_name = self.__init_task_dir(task)
         text_file_name = f"{folder_name}/{type}.txt"
         atr_name = f"{type}_prompt"
 
-        if not os.path.exists(text_file_name):
+        if force_regen or not os.path.exists(text_file_name):
             client = OpenAI(api_key=os.environ.get(self.text_ai_token_name), base_url=self.text_base_url)
             text_prompt = task[atr_name]
             text = client.chat.completions.create(
@@ -167,18 +167,20 @@ class CommonBlogger():
                     ).choices[0].message.content
             open(text_file_name, 'wt', encoding="UTF-8").write(text)
 
-    def review(self, type='topic'):
-        self.send(type, image_gen=True, text_gen=True, chat_id=self.review_chat_id, days_offset=self.days_to_review)
+    def review(self, type='topic', force_image_regen=False, force_text_regen=False):
+        self.send(type, image_gen=True, text_gen=True, chat_id=self.review_chat_id, days_offset=self.days_to_review
+                  , force_image_regen=force_image_regen, force_text_regen=force_text_regen)
 
 
-    def send(self, type='topic', image_gen=False, text_gen=False, chat_id=None, days_offset=None):
+    def send(self, type='topic', image_gen=False, text_gen=False, chat_id=None, days_offset=None
+             , force_image_regen=False, force_text_regen=False):
         chat_id = chat_id if chat_id is not None else self.production_chat_id
         tasks = json.load(open(self.tasks_file, 'rt', encoding='UTF-8'))
         task = self.task_extractor(tasks, days_offset)
         if task is not None:
             try:
-                if image_gen: self.gen_image(task, type)
-                if text_gen: self.gen_text(task, type)
+                if image_gen: self.gen_image(task, type, force_regen=force_image_regen)
+                if text_gen: self.gen_text(task, type, force_regen=force_text_regen)
             except Exception as e:
                 self.__send_error(str(e))
             self.__send(task, type, chat_id)

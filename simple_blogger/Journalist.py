@@ -1,24 +1,24 @@
 from datetime import timedelta
 from datetime import datetime
-from simple_blogger import CommonBlogger
+from simple_blogger import SimpleBlogger
 
-class SimpleBlogger(CommonBlogger):
+class Journalist(SimpleBlogger):
     def _example_task_creator(self):
-        return [ { "category": "Post Category", "description": "Catagory Description" } ]
+        return [ { "topic": "Post Topic", "category": "Post Category" } ]
       
     def _task_converter(self, item):
         return { 
                 "category": f"{item['category']}",
-                "description": f"{item['description']}",
-                "topic_image": f"Draw a picture, inspired by '{item['category']}'",
-                "topic_prompt": f"Write about '{item['category']}', use less than {self.topic_word_limit} words",
+                "category": f"{item['category']}",
+                "topic_image": f"Draw a picture, inspired by '{item['topic']}' from domain '{item['category']}'",
+                "topic_prompt": f"Write about '{item['topic']}' from domain '{item['category']}', use less than {self.topic_word_limit} words",
             }
     
     def _get_category_folder(self, task):
         return task['category']
                 
-    def _get_topic_folder(self, _):
-        return '.'
+    def _get_topic_folder(self, task):
+        return task['topic']
 
     def _task_post_processor(self, tasks, *_):
         for i, task in enumerate(tasks):
