@@ -33,6 +33,7 @@ class CommonBlogger():
                  , task_post_processor=None
                  , task_extractor=None
                  , example_task_creator=None
+                 , send_text_with_image=False
                  ):
         self.review_chat_id = review_chat_id
         self.project_name = project_name if project_name is not None else os.path.basename(os.getcwd())
@@ -61,6 +62,7 @@ class CommonBlogger():
         self.text_ai_token_name = text_ai_token_name
         self.text_base_url = text_base_url
         self.shuffle_tasks = shuffle_tasks
+        self.send_text_with_image = send_text_with_image
 
     def init_project(self):
         if not os.path.exists(self.files_dir): os.mkdir(self.files_dir)
@@ -191,11 +193,21 @@ class CommonBlogger():
         text_file_name = f"{folder_name}/{type}.txt"
         try:
             bot = telebot.TeleBot(os.environ.get(self.blogger_bot_token_name))
-            if os.path.exists(image_file_name):
-                bot.send_photo(chat_id=chat_id, photo=open(image_file_name, 'rb'), disable_notification=True)
+            if self.send_text_with_image and os.path.exists(image_file_name) and os.path.exists(text_file_name):
+                bot.send_photo(chat_id=chat_id
+                               , photo=open(image_file_name, 'rb')
+                               , caption=open(text_file_name, 'rt', encoding='UTF-8').read()
+                               , parse_mode="Markdown")
+            else:
+                if os.path.exists(image_file_name):
+                    bot.send_photo(chat_id=chat_id
+                                   , photo=open(image_file_name, 'rb')
+                                   , disable_notification=True)
 
-            if os.path.exists(text_file_name):
-                bot.send_message(chat_id=chat_id, text=open(text_file_name, 'rt', encoding='UTF-8').read(), parse_mode="Markdown")
+                if os.path.exists(text_file_name):
+                    bot.send_message(chat_id=chat_id
+                                     , text=open(text_file_name, 'rt', encoding='UTF-8').read()
+                                     , parse_mode="Markdown")
         except Exception as e:
             self.__send_error(str(e))
 
