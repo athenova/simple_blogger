@@ -2,13 +2,12 @@ import os
 import json
 import random
 import glob
-import requests
 import telebot
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
-from openai import OpenAI
-from PIL import Image
+from simple_blogger.generators.OpenAIGenerator import OpenAIImageGenerator
+from simple_blogger.generators.DeepSeekGenerator import DeepSeekTextGenerator
 
 class CommonBlogger():
     def __init__(self
@@ -17,8 +16,8 @@ class CommonBlogger():
                  , first_post_date=datetime.today() + timedelta(days=1)
                  , days_to_review=timedelta(days=1)
                  , days_between_posts=timedelta(days=1)
-                 , ai_image_model='dall-e-3'
-                 , ai_text_model='deepseek-chat'
+                 , text_generator=DeepSeekTextGenerator()
+                 , image_generator=OpenAIImageGenerator()
                  , topic_word_limit=300
                  , project_name=None
                  , working_dir=None
@@ -27,8 +26,6 @@ class CommonBlogger():
                  , catagory_folder_getter=None
                  , topic_folder_getter=None
                  , blogger_bot_token_name='BLOGGER_BOT_TOKEN'
-                 , text_ai_token_name='DEEPSEEK_API_KEY'
-                 , text_base_url='https://api.deepseek.com'
                  , shuffle_tasks=True
                  , task_post_processor=None
                  , task_extractor=None
@@ -49,8 +46,8 @@ class CommonBlogger():
         self.first_post_date = first_post_date
         self.days_to_review = days_to_review
         self.days_between_posts = days_between_posts
-        self.ai_image_model = ai_image_model
-        self.ai_text_model = ai_text_model
+        self.text_generator = text_generator
+        self.image_generator = image_generator
         self.example_task_creator = example_task_creator if example_task_creator is not None else self._example_task_creator
         self.task_converter = task_converter if task_converter is not None else self._task_converter
         self.system_prompt = system_prompt if system_prompt is not None else self._system_prompt
@@ -59,8 +56,6 @@ class CommonBlogger():
         self.task_post_processor = task_post_processor if task_post_processor is not None else self._task_post_processor
         self.task_extractor = task_extractor if task_extractor is not None else self._task_extractor
         self.blogger_bot_token_name = blogger_bot_token_name
-        self.text_ai_token_name = text_ai_token_name
-        self.text_base_url = text_base_url
         self.shuffle_tasks = shuffle_tasks
         self.send_text_with_image = send_text_with_image
 
@@ -127,52 +122,23 @@ class CommonBlogger():
 
     def gen_image(self, task, type='topic', force_regen=False):
         folder_name = self.__init_task_dir(task)
-
-        temp_image_file = f"{folder_name}/{type}.webp"
         image_file_name = f"{folder_name}/{type}.png"
         attr_name = f"{type}_image"
-
-        if force_regen or (not os.path.exists(temp_image_file) and not os.path.exists(image_file_name)):
-            client = OpenAI()
+        if attr_name in task:
             image_prompt = task[attr_name]
-            image_url = client.images.generate(
-                model = self.ai_image_model,
-                prompt = image_prompt,
-                size = "1024x1024",
-                quality = "standard",
-                n = 1                
-            ).data[0].url
-            response = requests.get(image_url)
-            with open(temp_image_file, 'wb') as f:
-                f.write(response.content)
-            
-        if os.path.exists(temp_image_file) and (force_regen or not os.path.exists(image_file_name)):
-            webp_image = Image.open(temp_image_file)
-            png_image = webp_image.convert("RGBA")
-            png_image.save(image_file_name)
-            os.remove(temp_image_file)
-    
+            self.image_generator.gen_content(image_prompt, image_file_name, force_regen=force_regen)
+   
     def gen_text(self, task, type='topic', force_regen=False):
         folder_name = self.__init_task_dir(task)
         text_file_name = f"{folder_name}/{type}.txt"
-        atr_name = f"{type}_prompt"
-
-        if force_regen or not os.path.exists(text_file_name):
-            client = OpenAI(api_key=os.environ.get(self.text_ai_token_name), base_url=self.text_base_url)
-            text_prompt = task[atr_name]
-            text = client.chat.completions.create(
-                        model=self.ai_text_model,
-                        messages=[
-                            { "role": "system", "content": self.system_prompt(task) },
-                            { "role": "user", "content": text_prompt },
-                        ]
-                    ).choices[0].message.content
-            open(text_file_name, 'wt', encoding="UTF-8").write(text)
+        attr_name = f"{type}_prompt"
+        if attr_name in task:
+            text_prompt = task[attr_name]
+            self.text_generator.gen_content(self.system_prompt(task), text_prompt, text_file_name, force_regen)
 
     def review(self, type='topic', force_image_regen=False, force_text_regen=False):
         self.send(type, image_gen=True, text_gen=True, chat_id=self.review_chat_id, days_offset=self.days_to_review
                   , force_image_regen=force_image_regen, force_text_regen=force_text_regen)
-
 
     def send(self, type='topic', image_gen=False, text_gen=False, chat_id=None, days_offset=None
              , force_image_regen=False, force_text_regen=False):
