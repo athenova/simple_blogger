@@ -31,6 +31,7 @@ class CommonBlogger():
                  , task_extractor=None
                  , example_task_creator=None
                  , send_text_with_image=False
+                 , preprocess_text_prompt=None
                  ):
         self.review_chat_id = review_chat_id
         self.project_name = project_name if project_name is not None else os.path.basename(os.getcwd())
@@ -55,6 +56,7 @@ class CommonBlogger():
         self.topic_folder_getter = topic_folder_getter if topic_folder_getter is not None else self._get_topic_folder
         self.task_post_processor = task_post_processor if task_post_processor is not None else self._task_post_processor
         self.task_extractor = task_extractor if task_extractor is not None else self._task_extractor
+        self.preprocess_text_prompt = preprocess_text_prompt if preprocess_text_prompt is not None else self._preprocess_text_prompt
         self.blogger_bot_token_name = blogger_bot_token_name
         self.shuffle_tasks = shuffle_tasks
         self.send_text_with_image = send_text_with_image
@@ -121,19 +123,19 @@ class CommonBlogger():
         return folder_name
 
     def gen_image(self, task, type='topic', force_regen=False):
-        folder_name = self.__init_task_dir(task)
-        image_file_name = f"{folder_name}/{type}.png"
         attr_name = f"{type}_image"
         if attr_name in task:
+            folder_name = self.__init_task_dir(task)
+            image_file_name = f"{folder_name}/{type}.png"
             image_prompt = task[attr_name]
             self.image_generator.gen_content(image_prompt, image_file_name, force_regen=force_regen)
    
     def gen_text(self, task, type='topic', force_regen=False):
-        folder_name = self.__init_task_dir(task)
-        text_file_name = f"{folder_name}/{type}.txt"
         attr_name = f"{type}_prompt"
         if attr_name in task:
-            text_prompt = task[attr_name]
+            folder_name = self.__init_task_dir(task)
+            text_file_name = f"{folder_name}/{type}.txt"
+            text_prompt = self.preprocess_text_prompt(task[attr_name])
             self.text_generator.gen_content(self.system_prompt(task), text_prompt, text_file_name, force_regen)
 
     def review(self, type='topic', force_image_regen=False, force_text_regen=False):
@@ -219,3 +221,6 @@ class CommonBlogger():
         for task in tasks:
             if task["date"] == check_date.strftime('%Y-%m-%d'): return task
         return None
+    
+    def _preprocess_text_prompt(self, prompt):
+        return prompt
