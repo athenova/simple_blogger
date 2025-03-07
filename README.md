@@ -95,7 +95,11 @@ It needs following environment variables:
 - BLOGGER_BOT_TOKEN
 - OPENAI_API_KEY
 - DEEPSEEK_API_KEY
-  
+
+Yandex generators needs following environment variables:
+- YC_API_KEY
+- YC_FOLDER_ID
+
 
 ## From the developer ##
 

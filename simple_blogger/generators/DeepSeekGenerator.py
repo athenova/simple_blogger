@@ -1,6 +1,6 @@
 from openai import OpenAI
 import os
-from .GeneratorBase import GeneratorBase
+from simple_blogger.generators.GeneratorBase import GeneratorBase
 
 class DeepSeekGenerator(GeneratorBase):
     def __init__(self, **kwargs):

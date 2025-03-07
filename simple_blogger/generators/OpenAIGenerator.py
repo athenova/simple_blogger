@@ -2,7 +2,7 @@ from openai import OpenAI
 import requests
 import os
 from PIL import Image
-from .GeneratorBase import GeneratorBase
+from simple_blogger.generators.GeneratorBase import GeneratorBase
 
 class OpenAIGenerator(GeneratorBase):
     def __init__(self, **kwargs):

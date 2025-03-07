@@ -1,17 +1,17 @@
-from .GeneratorBase import GeneratorBase
+from simple_blogger.generators.GeneratorBase import GeneratorBase
 from yandex_cloud_ml_sdk import YCloudML
 from PIL import Image
 import os
 
 class YandexGenerator(GeneratorBase):
-    def __init__(self, folder_id, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.folder_id=folder_id
+        self.folder_id = kwargs['folder_id'] if 'folder_id' in kwargs else os.environ.get('YC_FOLDER_ID')
 
 class YandexTextGenerator(YandexGenerator):
-    def __init__(self, folder_id, **kwargs):
+    def __init__(self, **kwargs):
         kwargs.setdefault("model_name", "yandexgpt")
-        super().__init__(folder_id, **kwargs)
+        super().__init__(**kwargs)
 
     def gen_content(self, system_prompt, user_prompt, output_file_name, force_regen=False):
         if force_regen or not os.path.exists(output_file_name):
@@ -25,9 +25,9 @@ class YandexTextGenerator(YandexGenerator):
             open(output_file_name, 'wt', encoding="UTF-8").write(text)
 
 class YandexImageGenerator(YandexGenerator):
-    def __init__(self, folder_id, **kwargs):
+    def __init__(self, **kwargs):
         kwargs.setdefault("model_name", "yandex-art")
-        super().__init__(folder_id, **kwargs)
+        super().__init__(**kwargs)
 
     def gen_content(self, prompt, output_file_name, force_regen=False, remove_temp_file=True):
         file_name, _ = os.path.splitext(output_file_name)
