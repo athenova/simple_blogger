@@ -13,7 +13,7 @@ class SimplestBlogger(SimpleBlogger):
     def _task_converter(self, item):
         return item
     
-    def _task_extractor(self, tasks, _):
+    def _task_extractor(self, tasks, **_):
         return tasks[0]
     
     def review(self, type='topic'):

@@ -24,7 +24,7 @@ class Journalist(SimpleBlogger):
         for i, task in enumerate(tasks):
             task["day"] = i
 
-    def _task_extractor(self, tasks, days_offset=None):
+    def _task_extractor(self, tasks, days_offset=None, **_):
         days_offset = days_offset if days_offset is not None else timedelta(days=0)
         check_date = datetime.today() + days_offset
         days_diff = check_date - self.first_post_date

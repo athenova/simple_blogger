@@ -138,15 +138,15 @@ class CommonBlogger():
             text_prompt = self.preprocess_text_prompt(task[attr_name])
             self.text_generator.gen_content(self.system_prompt(task), text_prompt, text_file_name, force_regen)
 
-    def review(self, type='topic', force_image_regen=False, force_text_regen=False):
+    def review(self, type='topic', force_image_regen=False, force_text_regen=False, index=0):
         self.send(type, image_gen=True, text_gen=True, chat_id=self.review_chat_id, days_offset=self.days_to_review
-                  , force_image_regen=force_image_regen, force_text_regen=force_text_regen)
+                  , force_image_regen=force_image_regen, force_text_regen=force_text_regen, index=index)
 
     def send(self, type='topic', image_gen=False, text_gen=False, chat_id=None, days_offset=None
-             , force_image_regen=False, force_text_regen=False):
+             , force_image_regen=False, force_text_regen=False, index=0):
         chat_id = chat_id if chat_id is not None else self.production_chat_id
         tasks = json.load(open(self.tasks_file, 'rt', encoding='UTF-8'))
-        task = self.task_extractor(tasks, days_offset)
+        task = self.task_extractor(tasks, days_offset, index)
         if task is not None:
             try:
                 if image_gen: self.gen_image(task, type, force_regen=force_image_regen)
@@ -215,12 +215,11 @@ class CommonBlogger():
             task["date"] = curr_date.strftime("%Y-%m-%d")
             curr_date += days_between_posts
 
-    def _task_extractor(self, tasks, days_offset=None):
+    def _task_extractor(self, tasks, days_offset=None, index=0):
         days_offset = days_offset if days_offset is not None else timedelta(days=0)
         check_date = date.today() + days_offset
-        for task in tasks:
-            if task["date"] == check_date.strftime('%Y-%m-%d'): return task
-        return None
+        today_tasks = list(filter(lambda task: task["date"] == check_date.strftime('%Y-%m-%d'), tasks))
+        return today_tasks[index] if len(today_tasks) > index else None
     
     def _preprocess_text_prompt(self, prompt):
         return prompt
