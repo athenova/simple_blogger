@@ -16,11 +16,11 @@ class SimplestBlogger(SimpleBlogger):
     def _task_extractor(self, tasks, **_):
         return tasks[0]
     
-    def review(self, type='topic'):
-        return super().review(type, force_image_regen=True, force_text_regen=True)
+    def review(self, type='topic', **kwargs):
+        return super().review(type, force_image_regen=True, force_text_regen=True, **kwargs)
 
-    def send(self, type='topic', image_gen=True, text_gen=True, chat_id=None, days_offset=None, force_text_regen=True, force_image_regen=True):
-        return super().send(type, image_gen, text_gen, chat_id, days_offset=days_offset, force_text_regen=force_text_regen, force_image_regen=force_image_regen)
+    def send(self, type='topic', image_gen=True, text_gen=True, chat_id=None, days_offset=None, force_text_regen=True, force_image_regen=True, **kwargs):
+        return super().send(type, image_gen, text_gen, chat_id, days_offset=days_offset, force_text_regen=force_text_regen, force_image_regen=force_image_regen, **kwargs)
     
     def revert(self):
         pass

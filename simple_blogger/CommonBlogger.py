@@ -146,11 +146,11 @@ class CommonBlogger():
              , force_image_regen=False, force_text_regen=False, index=0):
         chat_id = chat_id if chat_id is not None else self.production_chat_id
         tasks = json.load(open(self.tasks_file, 'rt', encoding='UTF-8'))
-        task = self.task_extractor(tasks, days_offset, index=index)
+        task = self.task_extractor(tasks, days_offset=days_offset, index=index)
         if task is not None:
             try:
-                if image_gen: self.gen_image(task, type, force_regen=force_image_regen)
-                if text_gen: self.gen_text(task, type, force_regen=force_text_regen)
+                if image_gen: self.gen_image(task, type=type, force_regen=force_image_regen)
+                if text_gen: self.gen_text(task, type=type, force_regen=force_text_regen)
             except Exception as e:
                 self.__send_error(str(e))
             self.__send(task, type, chat_id)
