@@ -12,7 +12,7 @@ from simple_blogger.senders.TelegramSender import TelegramSender
 
 class CommonBlogger():
     def __init__(self
-                 , reviewer_chat_id=None
+                 , review_chat_id=None
                  , production_chat_id=None
                  , first_post_date=datetime.today() + timedelta(days=1)
                  , days_to_review=timedelta(days=1)
@@ -27,8 +27,8 @@ class CommonBlogger():
                  , reviewer=None
                  , senders=None
                  ):
-        reviewer_chat_id = os.environ.get('TG_REVIEW_CHANNEL_ID') if reviewer_chat_id is None else reviewer_chat_id
-        self.reviewer = TelegramSender(channel_id = reviewer_chat_id
+        review_chat_id = os.environ.get('TG_REVIEW_CHANNEL_ID') if review_chat_id is None else review_chat_id
+        self.reviewer = TelegramSender(channel_id = review_chat_id
                                        , send_text_with_image=send_text_with_image) if reviewer is None else reviewer
         self.project_name = project_name if project_name is not None else os.path.basename(os.getcwd())
         production_chat_id = production_chat_id if production_chat_id is not None else f"@{self.project_name}"
