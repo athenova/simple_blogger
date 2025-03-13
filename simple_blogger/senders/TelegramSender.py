@@ -10,9 +10,9 @@ class TelegramSender(SenderBase):
         self.channel_id = os.environ.get('TG_REVIEW_CHANNEL_ID') if channel_id is None else channel_id
         self.bot = telebot.TeleBot(self.bot_token)
 
-    def send(self, text_file_name=None, image_file_name=None):
+    def send(self, text_file_name=None, image_file_name=None, chat_id=None, **_):
         if self.send_text_with_image and os.path.exists(image_file_name) and os.path.exists(text_file_name): 
-            self.bot.send_photo(chat_id=self.channel_id
+            self.bot.send_photo(chat_id=self.channel_id if chat_id is None else chat_id
                             , photo=open(image_file_name, 'rb')
                             , caption=open(text_file_name, 'rt', encoding='UTF-8').read()
                             , parse_mode="Markdown")

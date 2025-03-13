@@ -131,12 +131,12 @@ class CommonBlogger():
                   , force_image_regen=force_image_regen, force_text_regen=force_text_regen, index=index)
         self.__send(task=task,type=type,sender=self.reviewer)
 
-    def send(self, type='topic', image_gen=False, text_gen=False, chat_id=None, days_offset=None
-             , force_image_regen=False, force_text_regen=False, index=0):
+    def send(self, type='topic', image_gen=False, text_gen=False, days_offset=None
+             , force_image_regen=False, force_text_regen=False, index=0, **kwargs):
         task=self.__prepare(type=type, image_gen=image_gen, text_gen=text_gen, days_offset=days_offset
              , force_image_regen=force_image_regen, force_text_regen=force_text_regen, index=index)
         for sender in self.senders:
-            self.__send(task=task, type=type, sender=sender)
+            self.__send(task=task, type=type, sender=sender, **kwargs)
 
     def __prepare(self, type, image_gen=False, text_gen=False, days_offset=None
                   , force_image_regen=False, force_text_regen=False, index=0):
@@ -150,13 +150,13 @@ class CommonBlogger():
                 self.reviewer.send_error(str(e))
         return task
     
-    def __send(self, task, type, sender):
+    def __send(self, task, type, sender, **kwargs):
         if task is not None:
             folder_name = self.__init_task_dir(task)
             image_file_name = f"{folder_name}/{type}.png"
             text_file_name = f"{folder_name}/{type}.txt"
             try:
-                sender.send(text_file_name, image_file_name)
+                sender.send(text_file_name, image_file_name, **kwargs)
             except Exception as e:
                 self.reviewer.send_error(str(e))
 

@@ -28,7 +28,7 @@ class InstagramSender(SenderBase):
         self.md = Markdown(output_format="plain")
         self.md.stripTopLevelTags = False
 
-    def send(self, text_file_name=None, image_file_name=None):
+    def send(self, text_file_name=None, image_file_name=None, **_):
         if os.path.exists(image_file_name) and os.path.exists(text_file_name):
             temp_image_name = self.png2jpg(image_file_name)
             image_url = self.uploader.upload(temp_image_name)
