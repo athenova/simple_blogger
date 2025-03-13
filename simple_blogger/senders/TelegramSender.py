@@ -3,7 +3,7 @@ import os
 import telebot
 
 class TelegramSender(SenderBase):
-    def __init__(self, channel_token_name=None, channel_id='TG_BOT_TOKEN', **kwargs):
+    def __init__(self, channel_token_name=None, channel_id=None, **kwargs):
         super().__init__(**kwargs)
         channel_token_name ='TG_BOT_TOKEN' if channel_token_name is None else channel_token_name
         self.bot_token = os.environ.get(channel_token_name)
