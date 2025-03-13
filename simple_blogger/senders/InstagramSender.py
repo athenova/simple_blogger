@@ -19,7 +19,7 @@ def unmark_element(element, stream=None):
 
 Markdown.output_formats["plain"] = unmark_element
 
-class Instagram(SenderBase):
+class InstagramSender(SenderBase):
     def __init__(self, channel_token_name='IG_BOT_TOKEN', channel_id=None, uploader=None, **kwargs):
         super().__init__(**kwargs)
         self.uploader = S3Uploader() if uploader is None else uploader
