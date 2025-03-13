@@ -11,19 +11,20 @@ class TelegramSender(SenderBase):
         self.bot = telebot.TeleBot(self.bot_token)
 
     def send(self, text_file_name=None, image_file_name=None, chat_id=None, **_):
+        chat_id = self.channel_id if chat_id is None else chat_id
         if self.send_text_with_image and os.path.exists(image_file_name) and os.path.exists(text_file_name): 
-            self.bot.send_photo(chat_id=self.channel_id if chat_id is None else chat_id
+            self.bot.send_photo(chat_id=chat_id
                             , photo=open(image_file_name, 'rb')
                             , caption=open(text_file_name, 'rt', encoding='UTF-8').read()
                             , parse_mode="Markdown")
         else:
             if os.path.exists(image_file_name):
-                self.bot.send_photo(chat_id=self.channel_id
+                self.bot.send_photo(chat_id=chat_id
                                 , photo=open(image_file_name, 'rb')
                                 , disable_notification=True)
 
             if os.path.exists(text_file_name):
-                self.bot.send_message(chat_id=self.channel_id
+                self.bot.send_message(chat_id=chat_id
                                     , text=open(text_file_name, 'rt', encoding='UTF-8').read()
                                     , parse_mode="Markdown")
     
