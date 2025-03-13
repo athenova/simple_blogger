@@ -19,8 +19,8 @@ class SimplestBlogger(SimpleBlogger):
     def review(self, type='topic', **kwargs):
         return super().review(type, force_image_regen=True, force_text_regen=True, **kwargs)
 
-    def send(self, type='topic', image_gen=True, text_gen=True, chat_id=None, days_offset=None, force_text_regen=True, force_image_regen=True, **kwargs):
-        return super().send(type, image_gen, text_gen, chat_id, days_offset=days_offset, force_text_regen=force_text_regen, force_image_regen=force_image_regen, **kwargs)
+    def send(self, type='topic', image_gen=True, text_gen=True, days_offset=None, force_text_regen=True, force_image_regen=True, **kwargs):
+        return super().send(type, image_gen, text_gen, days_offset=days_offset, force_text_regen=force_text_regen, force_image_regen=force_image_regen, **kwargs)
     
     def revert(self):
         pass
