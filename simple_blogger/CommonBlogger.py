@@ -8,10 +8,11 @@ from datetime import datetime
 from datetime import timedelta
 from simple_blogger.generators.OpenAIGenerator import OpenAIImageGenerator
 from simple_blogger.generators.DeepSeekGenerator import DeepSeekTextGenerator
+from simple_blogger.senders.TelegramSender import TelegramSender
 
 class CommonBlogger():
     def __init__(self
-                 , review_chat_id
+                 , reviewer_chat_id=None
                  , production_chat_id=None
                  , first_post_date=datetime.today() + timedelta(days=1)
                  , days_to_review=timedelta(days=1)
@@ -20,25 +21,22 @@ class CommonBlogger():
                  , image_generator=OpenAIImageGenerator()
                  , topic_word_limit=300
                  , project_name=None
-                 , working_dir=None
-                 , system_prompt=None
-                 , task_converter=None
-                 , catagory_folder_getter=None
-                 , topic_folder_getter=None
                  , blogger_bot_token_name='BLOGGER_BOT_TOKEN'
                  , shuffle_tasks=True
-                 , task_post_processor=None
-                 , task_extractor=None
-                 , example_task_creator=None
                  , send_text_with_image=False
-                 , preprocess_text_prompt=None
+                 , reviewer=None
+                 , senders=None
                  ):
-        self.review_chat_id = review_chat_id
+        reviewer_chat_id = os.environ.get('TG_REVIEW_CHANNEL_ID') if reviewer_chat_id is None else reviewer_chat_id
+        self.reviewer = TelegramSender(channel_id = reviewer_chat_id
+                                       , send_text_with_image=send_text_with_image) if reviewer is None else reviewer
         self.project_name = project_name if project_name is not None else os.path.basename(os.getcwd())
-        self.production_chat_id = production_chat_id if production_chat_id is not None else f"@{self.project_name}"
-        self.working_dir = working_dir if working_dir is not None else '.'
+        production_chat_id = production_chat_id if production_chat_id is not None else f"@{self.project_name}"
+        self.senders = [ TelegramSender(channel_token_name=blogger_bot_token_name
+                                        , channel_id=production_chat_id
+                                        , send_text_with_image=send_text_with_image) ] if senders is None else senders
         self.topic_word_limit = topic_word_limit
-        self.files_dir = f"{self.working_dir}/files"
+        self.files_dir = f"./files"
         self.data_dir = f"{self.files_dir}/data"
         self.ideas_dir = f"{self.files_dir}/ideas"
         self.processed_dir = f"{self.files_dir}/processed"
@@ -49,17 +47,7 @@ class CommonBlogger():
         self.days_between_posts = days_between_posts
         self.text_generator = text_generator
         self.image_generator = image_generator
-        self.example_task_creator = example_task_creator if example_task_creator is not None else self._example_task_creator
-        self.task_converter = task_converter if task_converter is not None else self._task_converter
-        self.system_prompt = system_prompt if system_prompt is not None else self._system_prompt
-        self.catagory_folder_getter = catagory_folder_getter if catagory_folder_getter is not None else self._get_category_folder
-        self.topic_folder_getter = topic_folder_getter if topic_folder_getter is not None else self._get_topic_folder
-        self.task_post_processor = task_post_processor if task_post_processor is not None else self._task_post_processor
-        self.task_extractor = task_extractor if task_extractor is not None else self._task_extractor
-        self.preprocess_text_prompt = preprocess_text_prompt if preprocess_text_prompt is not None else self._preprocess_text_prompt
-        self.blogger_bot_token_name = blogger_bot_token_name
         self.shuffle_tasks = shuffle_tasks
-        self.send_text_with_image = send_text_with_image
 
     def init_project(self):
         if not os.path.exists(self.files_dir): os.mkdir(self.files_dir)
@@ -81,7 +69,7 @@ class CommonBlogger():
                     input_file = f"{root}/{file}"
                     data = json.load(open(input_file, "rt", encoding="UTF-8"))
                     for item in data:
-                        task = self.task_converter(item)
+                        task = self._task_converter(item)
                         task['index'] = i + index_start
                         tasks.append(task)
                     processed_file = f"{self.processed_dir}/{file}"
@@ -92,7 +80,7 @@ class CommonBlogger():
                 random.seed(year)
                 random.shuffle(tasks)
 
-            self.task_post_processor(tasks, self.first_post_date, self.days_between_posts)
+            self._task_post_processor(tasks, self.first_post_date, self.days_between_posts)
 
             json.dump(tasks, open(self.tasks_file, 'wt', encoding='UTF-8'), indent=4, ensure_ascii=False)
             if os.path.exists(self.backlog_file):
@@ -116,9 +104,9 @@ class CommonBlogger():
             print("Nothing to revert")
 
     def __init_task_dir(self, task):
-        folder_name = glob.escape(f"{self.data_dir}/{self.catagory_folder_getter(task).replace('/', ',')}")
+        folder_name = glob.escape(f"{self.data_dir}/{self._get_category_folder(task).replace('/', ',')}")
         if not os.path.exists(folder_name): os.mkdir(folder_name)
-        folder_name = glob.escape(f"{folder_name}/{self.topic_folder_getter(task).replace('/', ',')}")
+        folder_name = glob.escape(f"{folder_name}/{self._get_topic_folder(task).replace('/', ',')}")
         if not os.path.exists(folder_name): os.mkdir(folder_name)
         return folder_name
 
@@ -135,58 +123,47 @@ class CommonBlogger():
         if attr_name in task:
             folder_name = self.__init_task_dir(task)
             text_file_name = f"{folder_name}/{type}.txt"
-            text_prompt = self.preprocess_text_prompt(task[attr_name])
-            self.text_generator.gen_content(self.system_prompt(task), text_prompt, text_file_name, force_regen)
+            text_prompt = self._preprocess_text_prompt(task[attr_name])
+            self.text_generator.gen_content(self._system_prompt(task), text_prompt, text_file_name, force_regen)
 
     def review(self, type='topic', force_image_regen=False, force_text_regen=False, index=0):
-        self.send(type, image_gen=True, text_gen=True, chat_id=self.review_chat_id, days_offset=self.days_to_review
+        task=self.__prepare(type, image_gen=True, text_gen=True, days_offset=self.days_to_review
                   , force_image_regen=force_image_regen, force_text_regen=force_text_regen, index=index)
+        self.__send(task=task,type=type,sender=self.reviewer)
 
     def send(self, type='topic', image_gen=False, text_gen=False, chat_id=None, days_offset=None
              , force_image_regen=False, force_text_regen=False, index=0):
-        chat_id = chat_id if chat_id is not None else self.production_chat_id
+        task=self.__prepare(type=type, image_gen=image_gen, text_gen=text_gen, days_offset=days_offset
+             , force_image_regen=force_image_regen, force_text_regen=force_text_regen, index=index)
+        for sender in self.senders:
+            self.__send(task=task, type=type, sender=sender)
+
+    def __prepare(self, type, image_gen=False, text_gen=False, days_offset=None
+                  , force_image_regen=False, force_text_regen=False, index=0):
         tasks = json.load(open(self.tasks_file, 'rt', encoding='UTF-8'))
-        task = self.task_extractor(tasks, days_offset=days_offset, index=index)
+        task = self._task_extractor(tasks, days_offset=days_offset, index=index)
         if task is not None:
             try:
                 if image_gen: self.gen_image(task, type=type, force_regen=force_image_regen)
                 if text_gen: self.gen_text(task, type=type, force_regen=force_text_regen)
             except Exception as e:
-                self.__send_error(str(e))
-            self.__send(task, type, chat_id)
-
-    def __send(self, task, type, chat_id):
-        folder_name = self.__init_task_dir(task)
-        image_file_name = f"{folder_name}/{type}.png"
-        text_file_name = f"{folder_name}/{type}.txt"
-        try:
-            bot = telebot.TeleBot(os.environ.get(self.blogger_bot_token_name))
-            if self.send_text_with_image and os.path.exists(image_file_name) and os.path.exists(text_file_name):
-                bot.send_photo(chat_id=chat_id
-                               , photo=open(image_file_name, 'rb')
-                               , caption=open(text_file_name, 'rt', encoding='UTF-8').read()
-                               , parse_mode="Markdown")
-            else:
-                if os.path.exists(image_file_name):
-                    bot.send_photo(chat_id=chat_id
-                                   , photo=open(image_file_name, 'rb')
-                                   , disable_notification=True)
-
-                if os.path.exists(text_file_name):
-                    bot.send_message(chat_id=chat_id
-                                     , text=open(text_file_name, 'rt', encoding='UTF-8').read()
-                                     , parse_mode="Markdown")
-        except Exception as e:
-            self.__send_error(str(e))
-
-    def __send_error(self, message):
-        bot = telebot.TeleBot(os.environ.get(self.blogger_bot_token_name))
-        bot.send_message(chat_id=self.review_chat_id, text=message)
+                self.reviewer.send_error(str(e))
+        return task
+    
+    def __send(self, task, type, sender):
+        if task is not None:
+            folder_name = self.__init_task_dir(task)
+            image_file_name = f"{folder_name}/{type}.png"
+            text_file_name = f"{folder_name}/{type}.txt"
+            try:
+                sender.send(text_file_name, image_file_name)
+            except Exception as e:
+                self.reviewer.send_error(str(e))
 
     def __init_simple(self):
         ideas_file = f"{self.ideas_dir}/{self.project_name}.json"
         if not os.path.exists(ideas_file):
-            simple_ideas = self.example_task_creator()
+            simple_ideas = self._example_task_creator()
             json.dump(simple_ideas, open(ideas_file, 'wt', encoding='UTF-8'), indent=4, ensure_ascii=False)
 
     def _example_task_creator(self):
