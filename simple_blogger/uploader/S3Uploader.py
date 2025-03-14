@@ -13,5 +13,5 @@ class S3Uploader():
 
     def upload(self, image_file_name, extraArgs={ 'ContentType': 'image/jpeg' }):
         file_name = image_file_name[2:]
-        self.client.upload_file(image_file_name, self.bucket, file_name, extraArgs=extraArgs)
+        self.client.upload_file(image_file_name, self.bucket, file_name, ExtraArgs=extraArgs)
         return self.client.generate_presigned_url(ClientMethod='get_object', Params={ 'Bucket': self.bucket, 'Key': file_name })
