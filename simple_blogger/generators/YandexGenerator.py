@@ -7,16 +7,18 @@ class YandexGenerator(GeneratorBase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.folder_id = kwargs['folder_id'] if 'folder_id' in kwargs else os.environ.get('YC_FOLDER_ID')
+        self.model_version = kwargs['model_version'] if 'model_version' in kwargs else "latest"
 
 class YandexTextGenerator(YandexGenerator):
     def __init__(self, **kwargs):
         kwargs.setdefault("model_name", "yandexgpt")
+        kwargs.setdefault("model_version", "latest")
         super().__init__(**kwargs)
 
     def gen_content(self, system_prompt, user_prompt, output_file_name, force_regen=False):
         if force_regen or not os.path.exists(output_file_name):
             sdk = YCloudML(folder_id=self.folder_id)
-            model = sdk.models.completions(self.model_name)
+            model = sdk.models.completions(model_name=self.model_name, model_version=self.model_version)
             text = model.run([
                             { "role": "system", "text": system_prompt },
                             { "role": "user", "text": user_prompt },
@@ -27,6 +29,7 @@ class YandexTextGenerator(YandexGenerator):
 class YandexImageGenerator(YandexGenerator):
     def __init__(self, **kwargs):
         kwargs.setdefault("model_name", "yandex-art")
+        kwargs.setdefault("model_version", "latest")
         super().__init__(**kwargs)
 
     def gen_content(self, prompt, output_file_name, force_regen=False, remove_temp_file=True):
