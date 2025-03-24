@@ -9,7 +9,7 @@ class VkUploader():
             secret = os.environ.get('VK_SECRET_KEY') if secret is None else secret
             login = os.environ.get('VK_BOT_LOGIN') if login is None else login
             password = os.environ.get('VK_BOT_PASSWORD') if password is None else password
-            token = os.environ.get('VK_BOT_TOKEN') if group_id is None else group_id
+            token = os.environ.get('VK_BOT_TOKEN')
             v = '5.199'
             self.api = vk.API(token, v=v)
             try:
