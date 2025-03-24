@@ -1,3 +1,3 @@
 from .S3Uploader import *
-# from .YandexGenerator import *
+from .VkUploader import *
 # from .DeepSeekGenerator import *

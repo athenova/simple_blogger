@@ -1,23 +1,9 @@
 from simple_blogger.senders.SenderBase import SenderBase
-from simple_blogger.uploader.S3Uploader import S3Uploader
+from simple_blogger.uploaders.S3Uploader import S3Uploader
 import os
 import requests
 from PIL import Image
 from markdown import Markdown
-from io import StringIO
-
-def unmark_element(element, stream=None):
-    if stream is None:
-        stream = StringIO()
-    if element.text:
-        stream.write(element.text)
-    for sub in element:
-        unmark_element(sub, stream)
-    if element.tail:
-        stream.write(element.tail)
-    return stream.getvalue()
-
-Markdown.output_formats["plain"] = unmark_element
 
 class InstagramSender(SenderBase):
     def __init__(self, channel_token_name='IG_BOT_TOKEN', channel_id=None, uploader=None, **kwargs):
