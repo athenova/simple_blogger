@@ -24,19 +24,19 @@ class VkSender(SenderBase):
         self.md = Markdown(output_format="plain")
         self.md.stripTopLevelTags = False
             
-
-    def send(self, text_file_name=None, image_file_name=None, **_):
+    def send(self, text_file_name=None, image_file_name=None, group_id=None, **_):
+        group_id = self.group_id if group_id is None else group_id
         if os.path.exists(image_file_name) and os.path.exists(text_file_name):
             image_address = self.uploader.upload(image_file_name)
             caption_markdown = open(text_file_name, 'rt', encoding='UTF-8').read()
             caption = self.md.convert(caption_markdown)     
-            self.api.wall.post(owner_id=f"-{self.group_id}", from_group=1, message=caption, attachments=f"{image_address}")
+            self.api.wall.post(owner_id=f"-{group_id}", from_group=1, message=caption, attachments=f"{image_address}")
         elif os.path.exists(image_file_name):
             image_address = self.uploader.upload(image_file_name)
-            self.api.wall.post(owner_id=f"-{self.group_id}", from_group=1, attachments=f"{image_address}")
+            self.api.wall.post(owner_id=f"-{group_id}", from_group=1, attachments=f"{image_address}")
         elif os.path.exists(text_file_name):
             caption_markdown = open(text_file_name, 'rt', encoding='UTF-8').read()
             caption = self.md.convert(caption_markdown)     
-            self.api.wall.post(owner_id=f"-{self.group_id}", from_group=1, message=caption)
+            self.api.wall.post(owner_id=f"-{group_id}", from_group=1, message=caption)
 
     
