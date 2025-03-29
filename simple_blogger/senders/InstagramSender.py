@@ -6,20 +6,20 @@ from PIL import Image
 from markdown import Markdown
 
 class InstagramSender(SenderBase):
-    def __init__(self, channel_token_name='IG_BOT_TOKEN', channel_id=None, uploader=None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, channel_token_name='IG_BOT_TOKEN', channel_id=None, uploader=None, tags=None, **kwargs):
+        super().__init__(tags=tags,**kwargs)
         self.uploader = S3Uploader() if uploader is None else uploader
         self.channel_token = os.environ.get(channel_token_name)
         self.channel_id = self.me()['id'] if channel_id is None else channel_id
         self.md = Markdown(output_format="plain")
         self.md.stripTopLevelTags = False
 
-    def send(self, text_file_name=None, image_file_name=None, **_):
+    def send(self, text_file_name=None, image_file_name=None, tags=None, **_):
         if os.path.exists(image_file_name) and os.path.exists(text_file_name):
             temp_image_name = self.png2jpg(image_file_name)
             image_url = self.uploader.upload(temp_image_name)
             caption_markdown = open(text_file_name, 'rt', encoding='UTF-8').read()
-            caption = self.md.convert(caption_markdown)     
+            caption = self._add_tags(text=self.md.convert(caption_markdown), tags=tags)     
             post = self.create_post(self.channel_id, image_url=image_url, caption=caption)
             self.publish(self.channel_id, post['id'])
 
