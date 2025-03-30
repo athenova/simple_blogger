@@ -17,7 +17,7 @@ class Teacher(CommonBlogger):
                 "topic": f"{idea['author']}. {idea['topic']}" if 'author' in idea else idea['topic'],
                 "category": f"{idea['category']}",
                 "topic_image": f"Draw a picture, inspired by '{idea['topic']}' from '{idea['category']}'",
-                "topic_prompt": f"Write about '{idea['topic']}' from '{idea['category']}', use less than {self.topic_word_limit} words",
+                "topic_text": f"Write about '{idea['topic']}' from '{idea['category']}', use less than {self.topic_word_limit} words",
             }
 
     def _task_post_processor(self, tasks, first_post_date, *_):

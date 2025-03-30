@@ -11,7 +11,7 @@ class SimpleBlogger(CommonBlogger):
                 "category": f"{item['category']}",
                 "description": f"{item['description']}",
                 "topic_image": f"Draw a picture, inspired by '{item['category']}'",
-                "topic_prompt": f"Write about '{item['category']}', use less than {self.topic_word_limit} words",
+                "topic_text": f"Write about '{item['category']}', use less than {self.topic_word_limit} words",
             }
     
     def _get_category_folder(self, task):

@@ -11,7 +11,7 @@ class Journalist(SimpleBlogger):
                 "category": f"{item['category']}",
                 "category": f"{item['category']}",
                 "topic_image": f"Draw a picture, inspired by '{item['topic']}' from domain '{item['category']}'",
-                "topic_prompt": f"Write about '{item['topic']}' from domain '{item['category']}', use less than {self.topic_word_limit} words",
+                "topic_text": f"Write about '{item['topic']}' from domain '{item['category']}', use less than {self.topic_word_limit} words",
             }
     
     def _get_category_folder(self, task):

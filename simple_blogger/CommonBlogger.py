@@ -26,6 +26,8 @@ class CommonBlogger():
                  , send_text_with_image=False
                  , reviewer=None
                  , senders=None
+                 , image_prompt_char_limit=4000
+                 , alt_image_count = 1
                  ):
         review_chat_id = os.environ.get('TG_REVIEW_CHANNEL_ID') if review_chat_id is None else review_chat_id
         self.reviewer = TelegramSender(channel_id = review_chat_id
@@ -48,6 +50,8 @@ class CommonBlogger():
         self.text_generator = text_generator
         self.image_generator = image_generator
         self.shuffle_tasks = shuffle_tasks
+        self.image_prompt_char_limit = image_prompt_char_limit
+        self.alt_image_count = alt_image_count
 
     def init_project(self):
         if not os.path.exists(self.files_dir): os.mkdir(self.files_dir)
@@ -112,17 +116,31 @@ class CommonBlogger():
 
     def gen_image(self, task, type='topic', force_regen=False):
         attr_name = f"{type}_image"
+        folder_name = self.__init_task_dir(task)
         if attr_name in task:
-            folder_name = self.__init_task_dir(task)
             image_file_name = f"{folder_name}/{type}.png"
             image_prompt = task[attr_name]
             self.image_generator.gen_content(image_prompt, image_file_name, force_regen=force_regen)
+        attr_name = f"{type}_image_prompt"
+        if attr_name in task:
+            image_prompt_file_name = f"{folder_name}/{type}_image_prompt.txt"
+            image_prompt = open(image_prompt_file_name, 'rt', encoding='UTF-8').read()
+            for i in range(self.alt_image_count):
+                image_file_name = f"{folder_name}/{type}_{i+1}.png"
+                self.image_generator.gen_content(image_prompt, image_file_name, force_regen=force_regen)
    
     def gen_text(self, task, type='topic', force_regen=False):
-        attr_name = f"{type}_prompt"
+        text_suffixes = ['text', 'prompt']
+        folder_name = self.__init_task_dir(task)
+        for suffix in text_suffixes:
+            attr_name = f"{type}_{suffix}"
+            if attr_name in task:
+                text_file_name = f"{folder_name}/{type}.txt"
+                text_prompt = self._preprocess_text_prompt(task[attr_name])
+                self.text_generator.gen_content(self._system_prompt(task), text_prompt, text_file_name, force_regen)
+        attr_name = f"{type}_image_prompt"
         if attr_name in task:
-            folder_name = self.__init_task_dir(task)
-            text_file_name = f"{folder_name}/{type}.txt"
+            text_file_name = f"{folder_name}/{type}_image_prompt.txt"
             text_prompt = self._preprocess_text_prompt(task[attr_name])
             self.text_generator.gen_content(self._system_prompt(task), text_prompt, text_file_name, force_regen)
 
@@ -144,8 +162,8 @@ class CommonBlogger():
         task = self._task_extractor(tasks, days_offset=days_offset, index=index)
         if task is not None:
             try:
-                if image_gen: self.gen_image(task, type=type, force_regen=force_image_regen)
                 if text_gen: self.gen_text(task, type=type, force_regen=force_text_regen)
+                if image_gen: self.gen_image(task, type=type, force_regen=force_image_regen)
             except Exception as e:
                 self.reviewer.send_error(str(e))
         return task
@@ -172,12 +190,13 @@ class CommonBlogger():
     def _system_prompt(self, _):
         return f'You are a famous blogger with {1_000_000} followers'
 
-    def _task_converter(self, item):
+    def _task_converter(self, idea):
         return { 
-                "topic": item['topic'],
-                "category": f"{item['category']}",
-                "topic_image": f"Draw a picture, inspired by '{item['topic']}' from '{item['category']}'",
-                "topic_prompt": f"Write about '{item['topic']}' from '{item['category']}', use less than {self.topic_word_limit} words",
+                "topic": idea['topic'],
+                "category": f"{idea['category']}",
+                "topic_image": f"Draw a picture, inspired by '{idea['topic']}' from '{idea['category']}'",
+                "topic_text": f"Write about '{idea['topic']}' from '{idea['category']}', use less than {self.topic_word_limit} words",
+                "topic_image_prompt": f"Write a prompt to generate picture about '{idea['topic']}' from '{idea['category']}', use less than {self.image_prompt_char_limit} symbols",
             }
     
     def _get_category_folder(self, task):

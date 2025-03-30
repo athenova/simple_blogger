@@ -1,4 +1,4 @@
-from simple_blogger.senders.SenderBase import SenderBase
+from simple_blogger.senders.SenderBase import *
 from simple_blogger.uploaders.S3Uploader import S3Uploader
 import os
 import requests
@@ -15,6 +15,11 @@ class InstagramSender(SenderBase):
         self.md.stripTopLevelTags = False
 
     def send(self, text_file_name=None, image_file_name=None, tags=None, **_):
+        if self.send_alternatives is SendAlternatives.FirstOnly:
+            file_name, ext = os.path.splitext(image_file_name)
+            image_file_name = f"{file_name}_1{ext}"
+        if self.send_alternatives is SendAlternatives.All:
+            raise NotImplementedError()
         if os.path.exists(image_file_name) and os.path.exists(text_file_name):
             temp_image_name = self.png2jpg(image_file_name)
             image_url = self.uploader.upload(temp_image_name)

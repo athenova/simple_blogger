@@ -2,7 +2,7 @@ from simple_blogger import SimpleBlogger
 
 class SimplestBlogger(SimpleBlogger):
     def _example_task_creator(self, _):
-        return [ { "topic_prompt": "Topic prompt" } ]
+        return [ { "topic_text": "Topic prompt" } ]
     
     def _get_category_folder(self, _):
         return '.'
