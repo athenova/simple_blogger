@@ -2,6 +2,7 @@ from .SenderBase import *
 from .TelegramSender import *
 from .InstagramSender import *
 from .VkSender import *
+from .TikTokSender import *
 from io import StringIO
 # from .DeepSeekGenerator import *
 
