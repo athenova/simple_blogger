@@ -1,5 +1,7 @@
 from simple_blogger.generators.GeneratorBase import GeneratorBase
 from yandex_cloud_ml_sdk import YCloudML
+from speechkit import configure_credentials, creds
+from speechkit import model_repository
 from PIL import Image
 import os
 
@@ -48,3 +50,26 @@ class YandexImageGenerator(YandexGenerator):
             png_image = jpeg_image.convert("RGBA")
             png_image.save(output_file_name)
             if remove_temp_file: os.remove(temp_file_name)
+
+configure_credentials(
+    yandex_credentials=creds.YandexCredentials(
+        api_key=os.environ.get('YC_API_KEY')
+    )
+)
+
+class YandexSpeechGenerator(YandexGenerator):
+    def __init__(self, voice='masha', role='good', speed= 1.2, **kwargs):
+        super().__init__(**kwargs)
+        self.voice=voice
+        self.role=role
+        self.speed=speed
+
+    def gen_content(self, text_to_speak, output_file_name, force_regen=False, voice=None, role=None, speed=None):
+        if force_regen or not os.path.exists(output_file_name):
+            model = model_repository.synthesis_model()
+            model.voice = self.voice if voice is None else voice
+            model.role = self.role if role is None else role
+            model.speed = self.speed if speed is None else speed
+            model.unsafe_mode = True   
+            result = model.synthesize(text_to_speak, raw_format=False)
+            result.export(output_file_name, format='mp3')
