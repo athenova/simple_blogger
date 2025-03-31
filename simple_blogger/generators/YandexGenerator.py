@@ -59,6 +59,7 @@ configure_credentials(
 
 class YandexSpeechGenerator(YandexGenerator):
     def __init__(self, voice='masha', role='good', speed= 1.2, **kwargs):
+        kwargs.setdefault("model_name", "yandex-speechkit")
         super().__init__(**kwargs)
         self.voice=voice
         self.role=role

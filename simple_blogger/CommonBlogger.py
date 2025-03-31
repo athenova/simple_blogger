@@ -2,13 +2,17 @@ import os
 import json
 import random
 import glob
-import telebot
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
 from simple_blogger.generators.OpenAIGenerator import OpenAIImageGenerator
 from simple_blogger.generators.DeepSeekGenerator import DeepSeekTextGenerator
+from simple_blogger.generators.YandexGenerator import YandexSpeechGenerator
 from simple_blogger.senders.TelegramSender import TelegramSender
+from markdown import Markdown
+import emoji
+from moviepy import ImageClip, AudioFileClip, TextClip, CompositeVideoClip, concatenate_videoclips
+from moviepy.video.tools.subtitles import SubtitlesClip
 
 class CommonBlogger():
     def __init__(self
@@ -19,6 +23,7 @@ class CommonBlogger():
                  , days_between_posts=timedelta(days=1)
                  , text_generator=DeepSeekTextGenerator()
                  , image_generator=OpenAIImageGenerator()
+                 , speech_generator=YandexSpeechGenerator()
                  , topic_word_limit=300
                  , project_name=None
                  , blogger_bot_token_name='BLOGGER_BOT_TOKEN'
@@ -27,7 +32,9 @@ class CommonBlogger():
                  , reviewer=None
                  , senders=None
                  , image_prompt_char_limit=4000
-                 , alt_image_count = 1
+                 , alt_image_count = 0
+                 , video_gen = False
+                 , font_for_subtitles='Arial.ttf'
                  ):
         review_chat_id = os.environ.get('TG_REVIEW_CHANNEL_ID') if review_chat_id is None else review_chat_id
         self.reviewer = TelegramSender(channel_id = review_chat_id
@@ -49,9 +56,14 @@ class CommonBlogger():
         self.days_between_posts = days_between_posts
         self.text_generator = text_generator
         self.image_generator = image_generator
+        self.speech_generator = speech_generator
         self.shuffle_tasks = shuffle_tasks
         self.image_prompt_char_limit = image_prompt_char_limit
         self.alt_image_count = alt_image_count
+        self.md = Markdown(output_format="plain")
+        self.md.stripTopLevelTags = False
+        self.video_gen = video_gen
+        self.font_for_subtitles = font_for_subtitles
 
     def init_project(self):
         if not os.path.exists(self.files_dir): os.mkdir(self.files_dir)
@@ -144,6 +156,70 @@ class CommonBlogger():
             text_prompt = self._preprocess_text_prompt(task[attr_name])
             self.text_generator.gen_content(self._system_prompt(task), text_prompt, text_file_name, force_regen)
 
+    def gen_audio(self, task, type='topic', force_regen=False):
+        folder_name = self.__init_task_dir(task)
+        attr_name = f"{type}_text"
+        text_file_name = f"{folder_name}/{type}.txt"
+        if attr_name in task and os.path.exists(text_file_name):
+            emoji_text = open(text_file_name, 'rt', encoding='UTF-8').read()
+            md_text = emoji.replace_emoji(emoji_text) 
+            text_to_speak = self.md.convert(md_text)
+            audio_file_name = f"{folder_name}/{type}.mp3"
+            self.speech_generator.gen_content(text_to_speak=text_to_speak, output_file_name=audio_file_name, force_regen=force_regen)
+
+    def create_subtitles(self, input, duration):
+        result = []
+        delta = 3
+        speed = len(input) / (duration - delta + 1)
+        text = ''
+        tik = 0
+        for word in input.split():
+            if len(text) + len(word) > speed * delta:
+                result.append(((tik, tik + delta), text))
+                text = word
+                tik += delta
+            else:
+                text += f" {word}"
+        if text != '':
+            result.append(((tik, tik + delta), text))
+        return result
+
+    def gen_video(self, task, type='topic', force_regen=False):
+        folder_name = self.__init_task_dir(task)
+        text_file_name = f"{folder_name}/{type}.txt"
+        audio_file_name = f"{folder_name}/{type}.mp3"
+        image_file_name = f"{folder_name}/{type}.png"
+        video_file_name = f"{folder_name}/{type}.mp4"
+
+        if force_regen or not os.path.exists(video_file_name):
+            audio_clip = AudioFileClip(filename=audio_file_name)
+            generator = lambda txt: TextClip(text=txt, font=self.font_for_subtitles, font_size=32, color='white')
+            
+            emoji_text = open(text_file_name, 'rt', encoding='UTF-8').read()
+            md_text = emoji.replace_emoji(emoji_text) 
+            text = self.md.convert(md_text)
+            subtitles = self.create_subtitles(text, audio_clip.duration)
+
+            text_clip = SubtitlesClip(subtitles=subtitles, make_textclip=generator)
+            image_duration = audio_clip.duration / (1 if self.alt_image_count == 0 else self.alt_image_count) 
+
+            image_clips = []
+            if self.alt_image_count == 0:
+                image_clip = ImageClip(img=image_file_name, duration=image_duration)
+                image_clips.append(image_clip)
+            else:
+                file_name, ext = os.path.splitext(image_file_name)
+                for i in range(1, self.alt_image_count+1):
+                    temp_file_name = f"{file_name}_{i}{ext}"
+                    image_clips.append(ImageClip(img=temp_file_name, duration=image_duration))
+
+            image_clip = concatenate_videoclips(clips=image_clips)
+            composite = CompositeVideoClip(clips=[image_clip, text_clip.with_position(("center", 0.9), relative=True)])
+            video_clip = composite.with_audio(audio_clip)
+            EXTRA_LENGTH = 2
+            video_clip.duration = audio_clip.duration + EXTRA_LENGTH
+            video_clip.write_videofile(video_file_name, fps=1)       
+
     def review(self, type='topic', force_image_regen=False, force_text_regen=False, index=0):
         task=self.__prepare(type, image_gen=True, text_gen=True, days_offset=self.days_to_review
                   , force_image_regen=force_image_regen, force_text_regen=force_text_regen, index=index)
@@ -164,6 +240,9 @@ class CommonBlogger():
             try:
                 if text_gen: self.gen_text(task, type=type, force_regen=force_text_regen)
                 if image_gen: self.gen_image(task, type=type, force_regen=force_image_regen)
+                if self.video_gen:
+                    self.gen_audio(task, type=type, force_regen=force_text_regen) 
+                    self.gen_video(task, type=type, force_regen=force_image_regen)
             except Exception as e:
                 self.reviewer.send_error(str(e))
         return task
