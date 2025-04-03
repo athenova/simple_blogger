@@ -1,6 +1,4 @@
-import os
-import requests
-import vk
+import os, requests, vk
 from io import IOBase
 
 class VkUploader():

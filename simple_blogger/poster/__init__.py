@@ -1,7 +1,8 @@
+from simple_blogger.generator import File
+from simple_blogger.preprocessor.text import IdentityProcessor
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from ..builder.File import File
 from io import IOBase
-from ..preprocessor.text.IdentityProcessor import IdentityProcessor
 
 @dataclass
 class Post:
@@ -10,14 +11,12 @@ class Post:
 
     def get_real_message(self, processor=IdentityProcessor())->str:
         if self.message:
-            self.message.file.seek(0)
-            return processor.process(self.message.file.read())
+            return processor.process(self.message.get_file().read())
         return None
     
     def get_real_media(self)->IOBase:
         if self.media:
-            self.media.file.seek(0)
-            return self.media.file
+            return self.media.get_file()
         return None
     
     ext2ct = {
@@ -26,7 +25,12 @@ class Post:
         'txt': 'text/plain'
     }
 
-    def get_content_type(self):
+    def get_content_type(self)->str:
         if self.media and self.media.ext in Post.ext2ct:
             return Post.ext2ct[self.media.ext]
         return 'application/octet-stream'
+    
+class IPoster(ABC):
+    @abstractmethod
+    def post(self, post:Post, **_):
+        """ Post method """

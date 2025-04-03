@@ -1,23 +1,19 @@
-from ..uploader.S3Uploader import S3Uploader
-import os
-import requests
-from .IPoster import IPoster
-from .Post import Post
-from ..preprocessor.text.SerialProcessor import SerialProcessor
-from ..preprocessor.text.MarkdownCleaner import MarkdownCleaner
-from ..preprocessor.text.IdentityProcessor import IdentityProcessor
+from simple_blogger.uploader.S3Uploader import S3Uploader
+from simple_blogger.preprocessor.text import SerialProcessor, MarkdownCleaner, IdentityProcessor
+from poster import IPoster, Post
+import os, requests
 
-class IgPhotoPoster(IPoster):
-    def __init__(self, account_token_name='IG_BOT_TOKEN', account_id=None, uploader=S3Uploader(), custom_processor=IdentityProcessor(), **_):
+class InstagramPoster(IPoster):
+    def __init__(self, account_token_name='IG_BOT_TOKEN', account_id=None, uploader=S3Uploader(), processor=None, **_):
         self.uploader = uploader
         self.account_token = os.environ.get(account_token_name)
         self.account_id = account_id or self.me()['id']
-        self.processor = SerialProcessor([MarkdownCleaner(), custom_processor])
+        self.processor = SerialProcessor([MarkdownCleaner(), processor or IdentityProcessor()])
             
-    def post(self, post:Post, custom_processor=IdentityProcessor(), **_):
+    def post(self, post:Post, processor=None, **_):
         if post.media and post.message:
             image_url = self.uploader.upload(post.get_real_media(), extra_args={ 'ContentType': post.get_content_type() })
-            caption = post.get_real_message(SerialProcessor([self.processor, custom_processor]))
+            caption = post.get_real_message(SerialProcessor([self.processor, processor or IdentityProcessor()]))
             post = self.create_post(self.account_id, image_url=image_url, caption=caption)
             self.publish(self.account_id, post['id'])
 

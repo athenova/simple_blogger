@@ -1,6 +1,4 @@
-import os
-import boto3
-import uuid
+import os, boto3, uuid
 from io import IOBase
 
 class S3Uploader():

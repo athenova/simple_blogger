@@ -1,8 +1,7 @@
+from simple_blogger.generator import File, TextGenerator
 from openai import OpenAI
-import os
 from io import StringIO
-from .TextGenerator import TextGenerator
-from ...builder.File import File
+import os
 
 class DeepSeekTextGenerator(TextGenerator):
     def __init__(self, system_prompt, api_key_name ='DEEPSEEK_API_KEY', model_name='deepseek-chat'):

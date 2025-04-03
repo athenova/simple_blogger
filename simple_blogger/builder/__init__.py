@@ -1,4 +1,4 @@
-from ..poster.Post import Post
+from simple_blogger.poster import Post
 
 class PostBuilder():
     def __init__(self, message_builder=None, media_builder=None):
