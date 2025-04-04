@@ -18,10 +18,6 @@ class SimplestBlogger():
         post = self.builder.build(force_rebuild=self.force_rebuild)
         for poster in self.posters:
             poster.post(post=post)
-
-    def _check_date(self, task, days_before=0):
-        check_date = date.today() - timedelta(days=days_before)
-        return task['date'] == check_date.strftime('%Y-%m-%d')
     
     def _system_prompt(self):
         return 'Ты - известный блоггер с 1000000 подписчиков'
@@ -37,8 +33,8 @@ class SimplestBlogger():
     
 class SimpleBlogger(SimplestBlogger):
     def __init__(self, posters, force_rebuild=False, index=None):
-        super().__init__(builder=self._builder(), posters=posters, force_rebuild=force_rebuild)
         self.index=index
+        super().__init__(builder=self._builder(), posters=posters, force_rebuild=force_rebuild)
 
     def _path_builder(self, task):
         return f"{task['category']}/{task['topic']}/{self._topic()}"
@@ -60,12 +56,16 @@ class SimpleBlogger(SimplestBlogger):
     
     def _tasks_file_path(self):
         return f"{self._root_folder()}/projects/in_progress{(self.index or '')}.json"
+    
+    def _check_task(self, task, days_before=0, **_):
+        check_date = date.today() - timedelta(days=days_before)
+        return task['date'] == check_date.strftime('%Y-%m-%d')
 
     def _builder(self):
         tasks = json.load(open(self._tasks_file_path(), "rt", encoding="UTF-8"))
         path_builder=TaskPathBuilder(
             tasks=tasks, 
-            check=self._check_date, 
+            check=self._check_task, 
             path_builder=self._path_builder
         )
         builder = PostBuilder(
@@ -75,7 +75,7 @@ class SimpleBlogger(SimplestBlogger):
                     generator=self._message_generator(), 
                     prompt_builder=TaskPromptBuilder(
                             tasks=tasks,
-                            check=self._check_date,
+                            check=self._check_task,
                             prompt_builder=self._message_prompt_builder
                         )
                     ),
@@ -88,7 +88,7 @@ class SimpleBlogger(SimplestBlogger):
                     generator=self._image_generator(),
                     prompt_builder=TaskPromptBuilder(
                             tasks=tasks,
-                            check=self._check_date,
+                            check=self._check_task,
                             prompt_builder=self._image_prompt_builder
                         )
                     ),
@@ -103,13 +103,13 @@ class CommonBlogger(SimpleBlogger):
         super().__init__(posters=posters, force_rebuild=force_rebuild)
         
     def _image_prompt_prompt_builder(self, task):
-        return f"Напиши промпт для генерации изображения по тему '{task['topic']}' из области '{task['category']}'"
+        return f"Напиши промпт для генерации изображения на тему '{task['topic']}' из области '{task['category']}'"
     
     def _builder(self):
         tasks = json.load(open(self._tasks_file_path(), "rt", encoding="UTF-8"))
         path_builder=TaskPathBuilder(
             tasks=tasks, 
-            check=self._check_date, 
+            check=self._check_task, 
             path_builder=self._path_builder
         )
         builder = PostBuilder(
@@ -119,7 +119,7 @@ class CommonBlogger(SimpleBlogger):
                     generator=self._message_generator(), 
                     prompt_builder=TaskPromptBuilder(
                             tasks=tasks,
-                            check=self._check_date,
+                            check=self._check_task,
                             prompt_builder=self._message_prompt_builder
                         )
                     ),
@@ -137,7 +137,7 @@ class CommonBlogger(SimpleBlogger):
                                 generator=self._image_prompt_generator(), 
                                 prompt_builder=TaskPromptBuilder(
                                     tasks=tasks,
-                                    check=self._check_date,
+                                    check=self._check_task,
                                     prompt_builder=self._image_prompt_prompt_builder
                                 )),
                             filename="image_prompt",

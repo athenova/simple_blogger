@@ -11,7 +11,7 @@ class IContentBuilder(ABC):
         """Content builder method"""
 
     @abstractmethod
-    def ext()->str:
+    def ext(self)->str:
         """Content extension"""
 
 class ContentBuilder(IContentBuilder):

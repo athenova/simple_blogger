@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 class IPathBuilder(ABC):
     @abstractmethod
-    def build()->str:
+    def build(self)->str:
         """ Path builder method """
 
 class IdentityPathBuilder(IPathBuilder):
@@ -20,6 +20,6 @@ class TaskPathBuilder(IPathBuilder):
 
     def build(self):
         for task in self.tasks:
-            if self.check(task):
-                return self.path_builder(task)
+            if self.check(task=task, tasks=self.tasks):
+                return self.path_builder(task=task)
         return None

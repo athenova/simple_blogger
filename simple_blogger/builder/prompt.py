@@ -22,8 +22,8 @@ class TaskPromptBuilder(IPromptBuilder):
 
     def build(self, *_, **__):
         for task in self.tasks:
-            if self.check(task):
-                return self.prompt_builder(task)
+            if self.check(task=task, tasks=self.tasks):
+                return self.prompt_builder(task=task)
         return None
 
 class ContentBuilderPromptBuilder(IPromptBuilder):
