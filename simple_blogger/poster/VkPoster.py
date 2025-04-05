@@ -15,12 +15,12 @@ class VkPoster(IPoster):
         processor = processor or IdentityProcessor()
         group_id = group_id or self.group_id
         if post.media and post.message:
-            image_address = self.uploader.upload_photo(post.get_real_media(), group_id=group_id)
+            image_address = self.uploader.upload_photo(file=post.media, group_id=group_id)
             caption = post.get_real_message(SerialProcessor([self.processor, processor]))
             self.api.wall.post(owner_id=f"-{group_id}", from_group=1, message=caption, attachments=f"{image_address}")
         else:
             if post.media:
-                image_address = self.uploader.upload_photo(post.get_real_media(), group_id=group_id)
+                image_address = self.uploader.upload_photo(file=post.media, group_id=group_id)
                 self.api.wall.post(owner_id=f"-{group_id}", from_group=1, attachments=f"{image_address}")
             if post.message:
                 caption = post.get_real_message(SerialProcessor([self.processor, processor]))

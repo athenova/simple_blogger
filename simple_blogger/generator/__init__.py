@@ -13,6 +13,17 @@ class File:
         self.file.seek(0)
         return self.file
     
+    ext2ct = {
+        'jpg': 'image/jpeg',
+        'png': 'image/png',
+        'txt': 'text/plain'
+    }
+
+    def get_content_type(self)->str:
+        if self.ext in File.ext2ct:
+            return File.ext2ct[self.ext]
+        return 'application/octet-stream'
+    
 class IGeneratorBase(ABC):    
     @abstractmethod
     def generate(self, prompt, force_rebuild=False)->File:

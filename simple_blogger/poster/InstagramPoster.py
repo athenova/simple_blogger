@@ -1,6 +1,6 @@
 from simple_blogger.uploader.S3Uploader import S3Uploader
 from simple_blogger.preprocessor.text import SerialProcessor, MarkdownCleaner, IdentityProcessor
-from poster import IPoster, Post
+from simple_blogger.poster import IPoster, Post
 import os, requests
 
 class InstagramPoster(IPoster):
@@ -12,7 +12,7 @@ class InstagramPoster(IPoster):
             
     def post(self, post:Post, processor=None, **_):
         if post.media and post.message:
-            image_url = self.uploader.upload(post.get_real_media(), extra_args={ 'ContentType': post.get_content_type() })
+            image_url = self.uploader.upload(file=post.media)
             caption = post.get_real_message(SerialProcessor([self.processor, processor or IdentityProcessor()]))
             post = self.create_post(self.account_id, image_url=image_url, caption=caption)
             self.publish(self.account_id, post['id'])

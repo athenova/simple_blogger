@@ -25,9 +25,6 @@ class SimplestBlogger():
     def _message_generator(self):
         return YandexTextGenerator(system_prompt=self._system_prompt())
     
-    def _image_prompt_generator(self):
-        return YandexTextGenerator(system_prompt=self._system_prompt())
-    
     def _image_generator(self):
         return YandexImageGenerator()
     
@@ -104,6 +101,9 @@ class CommonBlogger(SimpleBlogger):
         
     def _image_prompt_prompt_builder(self, task):
         return f"Напиши промпт для генерации изображения на тему '{task['topic']}' из области '{task['category']}'"
+    
+    def _image_prompt_generator(self):
+        return YandexTextGenerator(system_prompt=self._system_prompt())
     
     def _builder(self):
         tasks = json.load(open(self._tasks_file_path(), "rt", encoding="UTF-8"))

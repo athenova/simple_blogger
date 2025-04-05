@@ -18,18 +18,7 @@ class Post:
         if self.media:
             return self.media.get_file()
         return None
-    
-    ext2ct = {
-        'jpg': 'image/jpeg',
-        'png': 'image/png',
-        'txt': 'text/plain'
-    }
-
-    def get_content_type(self)->str:
-        if self.media and self.media.ext in Post.ext2ct:
-            return Post.ext2ct[self.media.ext]
-        return 'application/octet-stream'
-    
+        
 class IPoster(ABC):
     @abstractmethod
     def post(self, post:Post, **_):
