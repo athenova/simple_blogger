@@ -2,18 +2,18 @@ import os, json, random, math
 from datetime import timedelta, date, datetime
 
 class Editor():
-    def __init__(self, multiple_projects=False, shuffle_tasks=True):
-        self.files_dir=f"./files"
-        self.data_dir=f"{self.files_dir}/data"
-        self.ideas_dir=f"{self.files_dir}/ideas"
-        self.backlog_file=f"{self.files_dir}/backlog.json"
-        self.projects_dir=f"{self.files_dir}/projects"
+    def __init__(self, root_folder='./files', multiple_projects=False, shuffle_tasks=True):
+        self.root_folder=root_folder
+        self.data_dir=f"{self.root_folder}/data"
+        self.ideas_dir=f"{self.root_folder}/ideas"
+        self.backlog_file=f"{self.root_folder}/backlog.json"
+        self.projects_dir=f"{self.root_folder}/projects"
         self.tasks_file=f"{self.projects_dir}/in_progress.json"
         self.multiple_projects=multiple_projects
         self.shuffle_tasks=shuffle_tasks
 
     def init_project(self):
-        if not os.path.exists(self.files_dir): os.mkdir(self.files_dir)
+        if not os.path.exists(self.root_folder): os.mkdir(self.root_folder)
         if not os.path.exists(self.data_dir): os.mkdir(self.data_dir)
         if not os.path.exists(self.ideas_dir): os.mkdir(self.ideas_dir)
         if not os.path.exists(self.projects_dir): os.mkdir(self.projects_dir)

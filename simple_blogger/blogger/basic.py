@@ -45,14 +45,14 @@ class SimpleBlogger(SimplestBlogger):
     def _topic(self):
         return 'topic'
     
-    def _root_folder(self):
+    def root_folder(self):
         return './files'
 
     def _data_folder(self):
-        return f"{self._root_folder()}/data"
+        return f"{self.root_folder()}/data"
     
     def _tasks_file_path(self):
-        return f"{self._root_folder()}/projects/in_progress{(self.index or '')}.json"
+        return f"{self.root_folder()}/projects/in_progress{(self.index or '')}.json"
     
     def _check_task(self, task, days_before=0, **_):
         check_date = date.today() - timedelta(days=days_before)
