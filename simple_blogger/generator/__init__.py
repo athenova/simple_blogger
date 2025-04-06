@@ -26,7 +26,7 @@ class File:
     
 class IGeneratorBase(ABC):    
     @abstractmethod
-    def generate(self, prompt, force_rebuild=False)->File:
+    def generate(self, prompt)->File:
         """Generation method"""
 
     @abstractmethod

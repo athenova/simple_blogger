@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 class IPromptBuilder(ABC):
     @abstractmethod
-    def build(self, force_rebuild=False, *_, **__)->str:
+    def build(self, *_, **__)->str:
         """ Prompt builder method """
 
 class IdentityPromptBuilder(IPromptBuilder):
@@ -27,5 +27,5 @@ class ContentBuilderPromptBuilder(IPromptBuilder):
     def __init__(self, content_builder: simple_blogger.builder.content.IContentBuilder):
         self.content_builder=content_builder
     
-    def build(self, force_rebuild=False):
-        return content:=self.content_builder.build(force_rebuild=force_rebuild) and content.get_file().read()
+    def build(self):
+        return (content:=self.content_builder.build()) and content.get_file().read()

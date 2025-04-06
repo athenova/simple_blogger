@@ -9,13 +9,12 @@ from datetime import date, timedelta
 import json
 
 class SimplestBlogger():
-    def __init__(self, builder:PostBuilder, posters:list[IPoster], force_rebuild=False):
+    def __init__(self, builder:PostBuilder, posters:list[IPoster]):
         self.builder = builder
         self.posters = posters
-        self.force_rebuild = force_rebuild
 
     def post(self, **__):
-        post = self.builder.build(force_rebuild=self.force_rebuild)
+        post = self.builder.build()
         for poster in self.posters:
             poster.post(post=post)
     
@@ -31,7 +30,8 @@ class SimplestBlogger():
 class SimpleBlogger(SimplestBlogger):
     def __init__(self, posters, force_rebuild=False, index=None):
         self.index=index
-        super().__init__(builder=self._builder(), posters=posters, force_rebuild=force_rebuild)
+        self.force_rebuild=force_rebuild
+        super().__init__(builder=self._builder(), posters=posters)
 
     def _path_constructor(self, task):
         return f"{task['category']}/{task['topic']}/{self._topic()}"
@@ -65,6 +65,7 @@ class SimpleBlogger(SimplestBlogger):
             message_builder=CachedContentBuilder(
                 task_builder=task_extractor,
                 path_constructor=self._path_constructor,
+                force_rebuild=self.force_rebuild,
                 builder=ContentBuilder(
                     generator=self._message_generator(), 
                     prompt_builder=TaskPromptBuilder(
@@ -78,6 +79,7 @@ class SimpleBlogger(SimplestBlogger):
             media_builder=CachedContentBuilder(
                 task_builder=task_extractor,
                 path_constructor=self._path_constructor,
+                force_rebuild=self.force_rebuild,
                 builder=ContentBuilder(
                     generator=self._image_generator(),
                     prompt_builder=TaskPromptBuilder(
@@ -113,7 +115,8 @@ class CommonBlogger(SimpleBlogger):
                             task_builder=task_extractor,
                             prompt_constructor=self._message_prompt_constructor
                         )
-                    ),
+                ),
+                force_rebuild=self.force_rebuild,
                 cache=FileCache(root_folder=self._data_folder(), is_binary=False),
                 filename="text"
             ),
@@ -131,11 +134,13 @@ class CommonBlogger(SimpleBlogger):
                                     task_builder=task_extractor,
                                     prompt_constructor=self._image_prompt_prompt_builder
                                 )),
+                            force_rebuild=self.force_rebuild,
                             filename="image_prompt",
                             cache=FileCache(root_folder=self._data_folder(), is_binary=False)
                         )
                     )
                 ),
+                force_rebuild=self.force_rebuild,
                 cache=FileCache(root_folder=self._data_folder()),
                 filename="image"
             )
