@@ -1,7 +1,7 @@
 from simple_blogger.builder import PostBuilder
 from simple_blogger.poster import IPoster
 from simple_blogger.generator.yandex import YandexTextGenerator, YandexImageGenerator
-from simple_blogger.builder.path import TaskPathBuilder
+from simple_blogger.builder.task import TaskExtractor
 from simple_blogger.cache.file_system import FileCache
 from simple_blogger.builder.prompt import TaskPromptBuilder, ContentBuilderPromptBuilder
 from simple_blogger.builder.content import CachedContentBuilder, ContentBuilder
@@ -33,13 +33,13 @@ class SimpleBlogger(SimplestBlogger):
         self.index=index
         super().__init__(builder=self._builder(), posters=posters, force_rebuild=force_rebuild)
 
-    def _path_builder(self, task):
+    def _path_constructor(self, task):
         return f"{task['category']}/{task['topic']}/{self._topic()}"
     
-    def _message_prompt_builder(self, task):
+    def _message_prompt_constructor(self, task):
         return f"Напиши пост на тему {task['topic']} из области '{task['category']}', используй не более 100 слов, используй смайлики"
     
-    def _image_prompt_builder(self, task):
+    def _image_prompt_constructor(self, task):
         return f"Нарисуй рисунок, вдохновленный темой {task['topic']} из области '{task['category']}'"
     
     def _topic(self):
@@ -60,33 +60,29 @@ class SimpleBlogger(SimplestBlogger):
 
     def _builder(self):
         tasks = json.load(open(self._tasks_file_path(), "rt", encoding="UTF-8"))
-        path_builder=TaskPathBuilder(
-            tasks=tasks, 
-            check=self._check_task, 
-            path_builder=self._path_builder
-        )
+        task_extractor = TaskExtractor(tasks=tasks, check=self._check_task)
         builder = PostBuilder(
             message_builder=CachedContentBuilder(
-                path_builder=path_builder,
+                task_builder=task_extractor,
+                path_constructor=self._path_constructor,
                 builder=ContentBuilder(
                     generator=self._message_generator(), 
                     prompt_builder=TaskPromptBuilder(
-                            tasks=tasks,
-                            check=self._check_task,
-                            prompt_builder=self._message_prompt_builder
+                            task_builder=task_extractor,
+                            prompt_constructor=self._message_prompt_constructor
                         )
                     ),
                 cache=FileCache(root_folder=self._data_folder(), is_binary=False),
                 filename=f"text"
             ),
             media_builder=CachedContentBuilder(
-                path_builder=path_builder,
+                task_builder=task_extractor,
+                path_constructor=self._path_constructor,
                 builder=ContentBuilder(
                     generator=self._image_generator(),
                     prompt_builder=TaskPromptBuilder(
-                            tasks=tasks,
-                            check=self._check_task,
-                            prompt_builder=self._image_prompt_builder
+                            task_builder=task_extractor,
+                            prompt_constructor=self._image_prompt_constructor
                         )
                     ),
                 cache=FileCache(root_folder=self._data_folder()),
@@ -107,38 +103,33 @@ class CommonBlogger(SimpleBlogger):
     
     def _builder(self):
         tasks = json.load(open(self._tasks_file_path(), "rt", encoding="UTF-8"))
-        path_builder=TaskPathBuilder(
-            tasks=tasks, 
-            check=self._check_task, 
-            path_builder=self._path_builder
-        )
+        task_extractor = TaskExtractor(tasks=tasks, check=self._check_task)
         builder = PostBuilder(
             message_builder=CachedContentBuilder(
-                path_builder=path_builder,
+                path_constructor=self._path_constructor,
                 builder=ContentBuilder(
                     generator=self._message_generator(), 
                     prompt_builder=TaskPromptBuilder(
-                            tasks=tasks,
-                            check=self._check_task,
-                            prompt_builder=self._message_prompt_builder
+                            task_builder=task_extractor,
+                            prompt_constructor=self._message_prompt_constructor
                         )
                     ),
                 cache=FileCache(root_folder=self._data_folder(), is_binary=False),
                 filename="text"
             ),
             media_builder=CachedContentBuilder(
-                path_builder=path_builder,
+                path_constructor=self._path_constructor,
                 builder=ContentBuilder(
                     generator=self._image_generator(),
                     prompt_builder=ContentBuilderPromptBuilder(
                         content_builder=CachedContentBuilder(
-                            path_builder=path_builder,
+                            task_builder=task_extractor,
+                            path_constructor=self._path_constructor,
                             builder=ContentBuilder(
                                 generator=self._image_prompt_generator(), 
                                 prompt_builder=TaskPromptBuilder(
-                                    tasks=tasks,
-                                    check=self._check_task,
-                                    prompt_builder=self._image_prompt_prompt_builder
+                                    task_builder=task_extractor,
+                                    prompt_constructor=self._image_prompt_prompt_builder
                                 )),
                             filename="image_prompt",
                             cache=FileCache(root_folder=self._data_folder(), is_binary=False)
