@@ -94,8 +94,8 @@ class SimpleBlogger(SimplestBlogger):
         return builder
     
 class CommonBlogger(SimpleBlogger):
-    def __init__(self, posters, force_rebuild=False):
-        super().__init__(posters=posters, force_rebuild=force_rebuild)
+    def __init__(self, posters, force_rebuild=False, index=None):
+        super().__init__(posters=posters, force_rebuild=force_rebuild, index=index)
         
     def _image_prompt_prompt_constructor(self, task):
         return f"Напиши промпт для генерации изображения на тему '{task['topic']}' из области '{task['category']}'"
