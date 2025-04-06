@@ -89,13 +89,10 @@ class Editor():
                 task["date"] = curr_date.strftime("%Y-%m-%d")
                 curr_date += days_between_posts
 
-    def _set_days(self, project_tasks, first_post_date=None, days_between_posts=1):
-        first_post_date = first_post_date or date.today()
-        today = date.today()
+    def _set_days(self, project_tasks, days_between_posts=1):
         for tasks in project_tasks:
-            day = (first_post_date-today).days
-            task_count = len(tasks)
+            day=0
             for task in tasks:
-                task["day"] = day % task_count
+                task["day"] = day
                 day += days_between_posts
 

@@ -108,6 +108,7 @@ class CommonBlogger(SimpleBlogger):
         task_extractor = TaskExtractor(tasks=tasks, check=self._check_task)
         builder = PostBuilder(
             message_builder=CachedContentBuilder(
+                task_builder=task_extractor,
                 path_constructor=self._path_constructor,
                 builder=ContentBuilder(
                     generator=self._message_generator(), 
@@ -121,6 +122,7 @@ class CommonBlogger(SimpleBlogger):
                 filename="text"
             ),
             media_builder=CachedContentBuilder(
+                task_builder=task_extractor,
                 path_constructor=self._path_constructor,
                 builder=ContentBuilder(
                     generator=self._image_generator(),
