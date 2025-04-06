@@ -24,10 +24,10 @@ class Editor():
         self._set_dates(project_tasks=project_tasks, first_post_date=first_post_date, days_between_posts=days_between_posts)
         self._save_tasks(project_tasks=project_tasks)
 
-    def create_auto(self, days_between_posts=1):
+    def create_auto(self, day_offset=0, days_between_posts=1):
         project_tasks=self._load_project_tasks()
         self._shuffle_if_needed(project_tasks=project_tasks)
-        self._set_days(project_tasks=project_tasks, days_between_posts=days_between_posts)
+        self._set_days(project_tasks=project_tasks, day_offset=day_offset, days_between_posts=days_between_posts)
         self._save_tasks(project_tasks=project_tasks)
 
     def create_between(self, first_post_date, last_post_date, exclude_weekends=True):
@@ -89,9 +89,9 @@ class Editor():
                 task["date"] = curr_date.strftime("%Y-%m-%d")
                 curr_date += days_between_posts
 
-    def _set_days(self, project_tasks, days_between_posts=1):
+    def _set_days(self, project_tasks, day_offset=0, days_between_posts=1):
         for tasks in project_tasks:
-            day=0
+            day=day_offset
             for task in tasks:
                 task["day"] = day
                 day += days_between_posts
