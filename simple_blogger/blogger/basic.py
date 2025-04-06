@@ -55,7 +55,7 @@ class SimpleBlogger(SimplestBlogger):
         return f"{self.root_folder()}/projects/in_progress{(self.index or '')}.json"
     
     def _check_task(self, task, days_before=0, **_):
-        check_date = date.today() - timedelta(days=days_before)
+        check_date = date.today() + timedelta(days=days_before)
         return task['date'] == check_date.strftime('%Y-%m-%d')
 
     def _builder(self):
