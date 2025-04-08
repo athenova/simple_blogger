@@ -2,7 +2,7 @@ from simple_blogger.generator import File
 from simple_blogger.generator.video import VideoGenerator
 from simple_blogger.generator import ImageGenerator
 from moviepy import ImageSequenceClip
-import tempfile, uuid
+import tempfile, uuid, io
 
 class ImageSequenceGenerator(VideoGenerator):
     def __init__(self, image_generator:ImageGenerator, duration_constructor=lambda:10, image_count=5):
@@ -24,4 +24,4 @@ class ImageSequenceGenerator(VideoGenerator):
             durations=[image_duration]*self.image_count)
         temp_file_name = f"{tempfile.gettempdir()}/{str(uuid.uuid4())}.{self.ext()}"
         clip.write_videofile(temp_file_name, fps=self.fps())
-        return File(self.ext(), open(temp_file_name,'rb'))
+        return File(self.ext(), io.BytesIO(open(temp_file_name,'rb').read()))

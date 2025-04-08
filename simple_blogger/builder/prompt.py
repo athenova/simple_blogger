@@ -1,5 +1,6 @@
 from __future__ import annotations 
 import simple_blogger.builder.content
+
 from abc import ABC, abstractmethod
 
 class IPromptBuilder(ABC):
@@ -14,6 +15,9 @@ class IdentityPromptBuilder(IPromptBuilder):
     def build(self, *_, **__):
         return self.prompt
     
+    def ext(self):
+        return 'txt'
+    
 class TaskPromptBuilder(IPromptBuilder):
     def __init__(self, task_builder, prompt_constructor):
        self.task_builder=task_builder
@@ -21,7 +25,10 @@ class TaskPromptBuilder(IPromptBuilder):
 
     def build(self, *_, **__):
         task = self.task_builder.build()
-        return task and self.prompt_constructor(task=task) 
+        return task and self.prompt_constructor(task=task)
+    
+    def ext(self):
+        return self.task_builder.ext()
 
 class ContentBuilderPromptBuilder(IPromptBuilder):
     def __init__(self, content_builder: simple_blogger.builder.content.IContentBuilder):
@@ -29,3 +36,6 @@ class ContentBuilderPromptBuilder(IPromptBuilder):
     
     def build(self):
         return (content:=self.content_builder.build()) and content.get_file().read()
+    
+    def ext(self):
+        return self.content_builder.ext()

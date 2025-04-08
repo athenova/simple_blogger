@@ -23,3 +23,15 @@ class TelegramPoster(IPoster):
     
     def post_error(self, message):
         self.bot.send_message(chat_id=self.chat_id, text=message)
+
+class TelegramVideoPoster(TelegramPoster):
+    def post(self, post:Post, chat_id=None, processor=None, **_):
+        processor = processor or IdentityProcessor()
+        chat_id = chat_id or self.chat_id
+        if self.send_text_with_image and post.media and post.message:
+            self.bot.send_video(chat_id=chat_id, video=post.get_real_media(), caption=post.get_real_message(SerialProcessor([self.processor, processor])), parse_mode="Markdown")
+        else:
+            if post.media:
+                self.bot.send_video(chat_id=chat_id, video=post.get_real_media(), disable_notification=True)
+            if post.message:
+                self.bot.send_message(chat_id=chat_id, text=post.get_real_message(SerialProcessor([self.processor, processor])), parse_mode="Markdown")

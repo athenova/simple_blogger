@@ -16,7 +16,8 @@ class File:
     ext2ct = {
         'jpg': 'image/jpeg',
         'png': 'image/png',
-        'txt': 'text/plain'
+        'txt': 'text/plain',
+        'mp4': 'video/mp4'
     }
 
     def get_content_type(self)->str:
