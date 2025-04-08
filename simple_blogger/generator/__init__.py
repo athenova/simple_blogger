@@ -49,7 +49,7 @@ class ImageGenerator(IGeneratorBase):
 
     def generate(self, *_, **__):
         stream = BytesIO()
-        Image.new(mode='RGBA', size=(1,1), color=1).save(stream)
+        Image.new(mode='RGBA', size=(320, 240), color=1).save(stream, format=self.ext())
         return File(self.ext(), stream)
     
     def ext(self):

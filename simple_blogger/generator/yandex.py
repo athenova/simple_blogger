@@ -35,4 +35,4 @@ class YandexImageGenerator(ImageGenerator):
         return File(self.ext(), BytesIO(result.image_bytes))
     
     def ext(self):
-        return 'jpg'
+        return 'jpeg'
