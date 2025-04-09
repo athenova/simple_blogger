@@ -8,14 +8,8 @@ from simple_blogger.builder.task import TaskExtractor
 from simple_blogger.cache.file_system import FileCache
 from simple_blogger.builder.prompt import TaskPromptBuilder, ContentBuilderPromptBuilder
 from simple_blogger.builder.content import CachedContentBuilder, ContentBuilder
+from simple_blogger.builder.tools import DurationBuilder
 import json
-
-class DurationConstructor():
-    def __init__(self, duration):
-        self.duration=duration
-
-    def get_duration(self):
-        return self.duration
 
 class ShortsBlogger(CommonBlogger):
     def __init__(self, posters, image_count=5, force_rebuild=False, index=None):
@@ -53,13 +47,12 @@ class ShortsBlogger(CommonBlogger):
                             filename="audio",
                             cache=FileCache(root_folder=self._data_folder())
                         )
-        duration_constructor=DurationConstructor(22) 
-        
+        duration_builder=DurationBuilder(audio_builder)
         subs_builder=CachedContentBuilder(
                         task_builder=task_extractor,
                         path_constructor=self._path_constructor,
                         builder=ContentBuilder(
-                            generator=SubsGenerator(duration_constructor=duration_constructor.get_duration), 
+                            generator=SubsGenerator(duration_constructor=duration_builder.build), 
                             prompt_builder=ContentBuilderPromptBuilder(content_builder=message_builder)
                         ),
                         force_rebuild=self.force_rebuild,
@@ -85,7 +78,7 @@ class ShortsBlogger(CommonBlogger):
                             task_builder=task_extractor,
                             path_constructor=self._path_constructor,
                             builder=ContentBuilder(
-                                generator=ImageSequenceGenerator(self._image_generator(), duration_constructor=duration_constructor.get_duration, image_count=self.image_count),
+                                generator=ImageSequenceGenerator(self._image_generator(), duration_constructor=duration_builder.build, image_count=self.image_count),
                                 prompt_builder=image_prompt_builder,
                             ),
                             force_rebuild=self.force_rebuild,
