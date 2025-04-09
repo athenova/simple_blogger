@@ -12,9 +12,9 @@ class InstagramPoster(IPoster):
             
     def post(self, post:Post, processor=None, **_):
         if post.media and post.message:
-            image_url = self.uploader.upload(file=post.media)
+            media_url = self.uploader.upload(file=post.media)
             caption = post.get_real_message(SerialProcessor([self.processor, processor or IdentityProcessor()]))
-            post = self.create_post(self.account_id, image_url=image_url, caption=caption)
+            post = self.create_post(self.account_id, media_url=media_url, caption=caption)
             self.publish(self.account_id, post['id'])
 
     def me(self):
@@ -23,8 +23,8 @@ class InstagramPoster(IPoster):
         response = requests.get(user_url, params=payload).json()
         return response
 
-    def create_post(self, account_id, image_url, caption):
-        payload = { 'image_url': image_url, 'access_token': self.account_token, 'caption': caption }
+    def create_post(self, account_id, media_url, caption):
+        payload = { 'image_url': media_url, 'access_token': self.account_token, 'caption': caption }
         crate_image_url = f"https://graph.instagram.com/v22.0/{account_id}/media"
         response = requests.post(crate_image_url, params=payload).json()
         return response
@@ -32,5 +32,19 @@ class InstagramPoster(IPoster):
     def publish(self, account_id, creation_id):
         payload = { 'creation_id': creation_id, 'access_token': self.account_token }
         crate_image_url = f"https://graph.instagram.com/v22.0/{account_id}/media_publish"
+        response = requests.post(crate_image_url, params=payload).json()
+        return response
+
+# class InstagramVideoPoster(InstagramPoster):
+#     def create_post(self, account_id, media_url, caption):
+#         payload = { 'video_url': media_url, 'media_type': 'VIDEO', 'access_token': self.account_token, 'caption': caption }
+#         crate_image_url = f"https://graph.instagram.com/v22.0/{account_id}/media"
+#         response = requests.post(crate_image_url, params=payload).json()
+#         return response
+    
+class InstagramReelsPoster(InstagramPoster):
+    def create_post(self, account_id, media_url, caption):
+        payload = { 'video_url': media_url, 'media_type': 'REELS', 'access_token': self.account_token, 'caption': caption }
+        crate_image_url = f"https://graph.instagram.com/v22.0/{account_id}/media"
         response = requests.post(crate_image_url, params=payload).json()
         return response
