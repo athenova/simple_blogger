@@ -25,3 +25,19 @@ class VkPoster(IPoster):
             if post.message:
                 caption = post.get_real_message(SerialProcessor([self.processor, processor]))
                 self.api.wall.post(owner_id=f"-{group_id}", from_group=1, message=caption)
+
+class VkVideoPoster(VkPoster):
+    def post(self, post:Post, group_id=None, processor=None, **_):
+        processor = processor or IdentityProcessor()
+        group_id = group_id or self.group_id
+        if post.media and post.message:
+            video_address = self.uploader.upload_video(file=post.media, group_id=group_id)
+            caption = post.get_real_message(SerialProcessor([self.processor, processor]))
+            self.api.wall.post(owner_id=f"-{group_id}", from_group=1, message=caption, attachments=f"{video_address}")
+        else:
+            if post.media:
+                video_address = self.uploader.upload_video(file=post.media, group_id=group_id)
+                self.api.wall.post(owner_id=f"-{group_id}", from_group=1, attachments=f"{video_address}")
+            if post.message:
+                caption = post.get_real_message(SerialProcessor([self.processor, processor]))
+                self.api.wall.post(owner_id=f"-{group_id}", from_group=1, message=caption)

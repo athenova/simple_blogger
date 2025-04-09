@@ -22,9 +22,6 @@ class ShortsBlogger(CommonBlogger):
         self.image_count=image_count
         super().__init__(posters=posters, force_rebuild=force_rebuild, index=index)
         
-    def _image_prompt_prompt_constructor(self, task):
-        return f"Напиши промпт для генерации изображения на тему '{task['topic']}' из области '{task['category']}'"
-    
     def _speech_generator(self):
         return YandexSpeechGenerator()
         

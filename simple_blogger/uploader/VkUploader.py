@@ -18,3 +18,13 @@ class VkUploader():
                                                 , server=response["server"]
                                                 , hash=response["hash"])
         return f"photo{response[0]['owner_id']}_{response[0]['id']}"
+    
+    def upload_video(self, file:File, group_id=None):
+        group_id = group_id or self.group_id
+        response = self.api.video.save(group_id=group_id)
+        upload_url = response["upload_url"]
+        video_id = response['video_id']
+        owner_id = response['owner_id']
+        files = {'video': (f"video.{file.ext}", file.get_file(), file.get_content_type() ) }
+        response = requests.post(url=upload_url, files=files).json()
+        return f"video{owner_id}_{video_id}"
