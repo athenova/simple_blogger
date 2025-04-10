@@ -25,6 +25,22 @@ class VkUploader():
         upload_url = response["upload_url"]
         video_id = response['video_id']
         owner_id = response['owner_id']
-        files = {'video': (f"video.{file.ext}", file.get_file(), file.get_content_type() ) }
+        files = {'video_file': (f"video.{file.ext}", file.get_file(), file.get_content_type() ) }
         response = requests.post(url=upload_url, files=files).json()
         return f"video{owner_id}_{video_id}"
+    
+    def upload_photo_for_stories(self, file:File, group_id=None):
+        group_id = group_id or self.group_id
+        response = self.api.stories.getPhotoUploadServer(group_id=group_id, add_to_news=1)
+        upload_url = response["upload_url"]
+        files = {'file': (f"photo.{file.ext}", file.get_file(), file.get_content_type() ) }
+        response = requests.post(url=upload_url, files=files).json()
+        return response['response']['upload_result']
+
+    def upload_video_for_stories(self, file:File, group_id=None):
+        group_id = group_id or self.group_id
+        response = self.api.stories.getVideoUploadServer(group_id=group_id, add_to_news=1)
+        upload_url = response["upload_url"]
+        files = {'video_file': (f"video.{file.ext}", file.get_file(), file.get_content_type() ) }
+        response = requests.post(url=upload_url, files=files).json()
+        return response['response']['upload_result']
