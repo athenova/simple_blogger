@@ -57,6 +57,17 @@ class SimpleBlogger(SimplestBlogger):
     def _check_task(self, task, days_before=0, **_):
         check_date = date.today() + timedelta(days=days_before)
         return task['date'] == check_date.strftime('%Y-%m-%d')
+    
+    def print_tasks(self):
+        tasks = json.load(open(self._tasks_file_path(), "rt", encoding="UTF-8"))
+        task_extractor = TaskExtractor(tasks=tasks, check=self._check_task)
+        task = task_extractor.build()
+        print(f"system: {self._system_prompt()}")
+        print(f"path: {self._path_constructor(task)}")
+        print(f"message: {self._message_prompt_constructor(task)}")
+        if not issubclass(self.__class__, CommonBlogger):
+            print(f"image: {self._image_prompt_constructor(task)}") 
+        return task 
 
     def _builder(self):
         tasks = json.load(open(self._tasks_file_path(), "rt", encoding="UTF-8"))
@@ -102,6 +113,11 @@ class CommonBlogger(SimpleBlogger):
     
     def _image_prompt_generator(self):
         return YandexTextGenerator(system_prompt=self._system_prompt())
+    
+    def print_tasks(self):
+        task = super().print_tasks()
+        print(f"image_prompt: {self._image_prompt_prompt_constructor(task)}")
+        return task
     
     def _builder(self):
         tasks = json.load(open(self._tasks_file_path(), "rt", encoding="UTF-8"))
