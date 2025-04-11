@@ -9,6 +9,7 @@ from simple_blogger.cache.file_system import FileCache
 from simple_blogger.builder.prompt import TaskPromptBuilder, ContentBuilderPromptBuilder
 from simple_blogger.builder.content import CachedContentBuilder, ContentBuilder
 from simple_blogger.builder.tools import DurationBuilder
+from simple_blogger.preprocessor.text import MarkdownCleaner, SerialProcessor, EmojiCleaner
 import json
 
 class ShortsBlogger(CommonBlogger):
@@ -41,7 +42,8 @@ class ShortsBlogger(CommonBlogger):
                             path_constructor=self._path_constructor,
                             builder=ContentBuilder(
                                 generator=self._speech_generator(), 
-                                prompt_builder=ContentBuilderPromptBuilder(content_builder=message_builder)
+                                prompt_builder=ContentBuilderPromptBuilder(content_builder=message_builder),
+                                prompt_processor=SerialProcessor([MarkdownCleaner(), EmojiCleaner()])
                             ),
                             force_rebuild=self.force_rebuild,
                             filename="audio",
@@ -53,7 +55,8 @@ class ShortsBlogger(CommonBlogger):
                         path_constructor=self._path_constructor,
                         builder=ContentBuilder(
                             generator=SubsGenerator(duration_constructor=duration_builder.build), 
-                            prompt_builder=ContentBuilderPromptBuilder(content_builder=message_builder)
+                            prompt_builder=ContentBuilderPromptBuilder(content_builder=message_builder),
+                            prompt_processor=SerialProcessor([MarkdownCleaner(), EmojiCleaner()])
                         ),
                         force_rebuild=self.force_rebuild,
                         filename="subs",

@@ -3,6 +3,7 @@ import simple_blogger.builder.prompt
 from simple_blogger.generator import File
 from simple_blogger.cache.file_system import FileCache
 from simple_blogger.builder.task import ITaskBuilder
+from simple_blogger.preprocessor.text import ITextProcessor, IdentityProcessor
 from abc import ABC, abstractmethod
 
 class IContentBuilder(ABC):    
@@ -15,12 +16,13 @@ class IContentBuilder(ABC):
         """Content extension"""
 
 class ContentBuilder(IContentBuilder):
-    def __init__(self, generator, prompt_builder:simple_blogger.builder.prompt.IPromptBuilder):
+    def __init__(self, generator, prompt_builder:simple_blogger.builder.prompt.IPromptBuilder, prompt_processor:ITextProcessor=None):
         self.generator = generator
         self.prompt_builder = prompt_builder
+        self.prompt_processor=prompt_processor or IdentityProcessor()
 
     def build(self):
-        prompt = self.prompt_builder.build()
+        prompt = self.prompt_processor.process(self.prompt_builder.build())
         return prompt and self.generator.generate(prompt)
     
     def ext(self):
