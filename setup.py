@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
   name='simple_blogger',
-  version='0.1.2',
+  version='0.1.3',
   author='Aleksey Sergeyev',
   author_email='aleksey.sergeyev@yandex.com',
   description='A simple blogger library',

@@ -1,5 +1,5 @@
 from __future__ import annotations 
-import simple_blogger.builder.prompt
+import simple_blogger.builder.prompt, os
 from simple_blogger.generator import File
 from simple_blogger.cache.file_system import FileCache
 from simple_blogger.builder.task import ITaskBuilder
@@ -38,7 +38,7 @@ class CachedContentBuilder(IContentBuilder):
         self.filename = filename
 
     def __build(self, task):
-        uri = f"{self.path_constructor(task)}/{self.filename}.{self.builder.ext()}"
+        uri = os.path.join(self.path_constructor(task), f"{self.filename}.{self.builder.ext()}")
         if self.force_rebuild or (cached := self.cache.load(uri=uri)) is None:
             new = self.builder.build()
             if new is not None:
