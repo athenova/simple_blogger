@@ -1,5 +1,5 @@
 from simple_blogger.blogger.basic.cached import CachedSimpleBlogger, CachedCommonBlogger
-from simple_blogger.blogger import FiniteBlogger
+from simple_blogger.blogger.finite import FiniteBlogger
 
 class CachedFiniteSimpleBlogger(CachedSimpleBlogger, FiniteBlogger):
     def __init__(self, posters, force_rebuild=True, index=None):

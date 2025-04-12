@@ -1,5 +1,5 @@
 from simple_blogger.blogger.basic.cached import CachedSimpleBlogger, CachedCommonBlogger
-from simple_blogger.blogger import AutoBlogger
+from simple_blogger.blogger.auto import AutoBlogger
 
 class CachedAutoSimpleBlogger(CachedSimpleBlogger, AutoBlogger):
     def __init__(self, posters, first_post_date=None, force_rebuild=True, index=None):
