@@ -25,7 +25,7 @@ class TaskPromptBuilder(IPromptBuilder):
 
     def build(self, *_, **__):
         task = self.task_builder.build()
-        return task and self.prompt_constructor(task=task)
+        return task and self.prompt_constructor(task)
     
     def ext(self):
         return self.task_builder.ext()
