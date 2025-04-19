@@ -5,6 +5,13 @@ class ITaskBuilder(ABC):
     def build(self):
         """Task extractor method """
 
+class IdentityTaskBuilder(ITaskBuilder):
+    def __init__(self, task):
+        self.task = task
+
+    def build(self):
+        return self.task
+
 class TaskExtractor(ITaskBuilder):
     def __init__(self, tasks, check):
         self.tasks = tasks

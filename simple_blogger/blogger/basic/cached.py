@@ -5,7 +5,7 @@ from simple_blogger.builder.task import TaskExtractor
 from simple_blogger.cache.file_system import FileCache
 from simple_blogger.builder.prompt import TaskPromptBuilder, ContentBuilderPromptBuilder
 from simple_blogger.builder.content import CachedContentBuilder, ContentBuilder
-import json
+import json, os
 
 class CachedSimpleBlogger(SimpleBlogger, CachedBlogger):
     def __init__(self, posters, force_rebuild=False, index=None):
@@ -13,7 +13,7 @@ class CachedSimpleBlogger(SimpleBlogger, CachedBlogger):
         SimpleBlogger.__init__(self, posters=posters, index=index)
 
     def _builder(self):
-        tasks = json.load(open(self._tasks_file_path(), "rt", encoding="UTF-8"))
+        tasks = json.load(open(self._tasks_file_path(), "rt", encoding="UTF-8")) if os.path.exists(self._tasks_file_path()) else []
         task_extractor = TaskExtractor(tasks=tasks, check=self._check_task)
         message_builder=CachedContentBuilder(
             task_builder=task_extractor,
@@ -55,7 +55,7 @@ class CachedCommonBlogger(CommonBlogger, CachedBlogger):
         CommonBlogger.__init__(self, posters=posters, index=index)
         
     def _builder(self):
-        tasks = json.load(open(self._tasks_file_path(), "rt", encoding="UTF-8"))
+        tasks = json.load(open(self._tasks_file_path(), "rt", encoding="UTF-8")) if os.path.exists(self._tasks_file_path()) else []
         task_extractor = TaskExtractor(tasks=tasks, check=self._check_task)
         message_builder=CachedContentBuilder(
             task_builder=task_extractor,

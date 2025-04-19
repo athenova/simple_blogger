@@ -1,7 +1,10 @@
 from simple_blogger.builder import PostBuilder
+from simple_blogger.builder.content import CachedContentBuilder, ContentBuilder
+from simple_blogger.builder.prompt import ContentBuilderPromptBuilder, TaskPromptBuilder
+from simple_blogger.cache import Cache
 from simple_blogger.poster import IPoster
 from simple_blogger.generator.yandex import YandexTextGenerator, YandexImageGenerator
-from simple_blogger.builder.task import TaskExtractor
+from simple_blogger.builder.task import IdentityTaskBuilder, TaskExtractor
 from abc import abstractmethod
 from datetime import date, timedelta
 import json, os, random
@@ -24,6 +27,37 @@ class SimplestBlogger():
     
     def _image_generator(self):
         return YandexImageGenerator()
+    
+class Journalist(SimplestBlogger):
+    def _prompt_constructor(self, *_, **__):
+        return "Выбери рандомную тему из рандомной области. Напиши эссе на эту тему. Используй смайлики и не более 150 слов."
+
+    def __init__(self, posters):
+        task_builder = IdentityTaskBuilder('.')
+        message_builder=CachedContentBuilder(
+            task_builder=task_builder,
+            path_constructor=lambda _:'.',
+            builder=ContentBuilder(
+                generator=self._message_generator(),
+                prompt_builder=TaskPromptBuilder(
+                        task_builder=task_builder,
+                        prompt_constructor=self._prompt_constructor
+                    )
+            ),
+            cache=Cache(),
+            filename=f"text"
+        )
+        image_builder=ContentBuilder(
+            generator=self._image_generator(), 
+            prompt_builder=ContentBuilderPromptBuilder(
+                content_builder=message_builder
+            )
+        )
+        builder = PostBuilder(
+            message_builder=message_builder,
+            media_builder=image_builder
+        )
+        super().__init__(builder, posters)  
     
 class ProjectBlogger(SimplestBlogger):
     def __init__(self, posters, index=None):
