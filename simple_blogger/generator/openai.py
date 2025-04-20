@@ -21,12 +21,15 @@ class OpenAiTextGenerator(TextGenerator):
         return File(self.ext(), StringIO(text))
     
 class OpenAiImageGenerator(ImageGenerator):
-    def __init__(self, api_key_name ='OPENAI_API_KEY', model_name='dall-e-3'):
+    def __init__(self, api_key_name ='OPENAI_API_KEY', model_name='dall-e-3', system_prompt=None, style_prompt=None):
         self.api_key = os.environ.get(api_key_name)
         self.model_name=model_name
+        self.system_prompt=system_prompt
+        self.style_prompt=style_prompt
 
     def generate(self, prompt, **_):
         client = OpenAI(api_key=self.api_key)
+        prompt = f"{self.system_prompt + '\n' if self.system_prompt else ''}{prompt}{'\n' + self.style_prompt if self.style_prompt else ''}"
         image_url = client.images.generate(
             model = self.model_name,
             prompt = prompt,
