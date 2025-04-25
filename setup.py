@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
   name='simple_blogger',
-  version='0.2.5',
+  version='0.2.6',
   author='Aleksey Sergeyev',
   author_email='aleksey.sergeyev@yandex.com',
   description='A simple blogger library',
@@ -11,7 +11,7 @@ setup(
   url='https://github.com/athenova/simple_blogger',
   packages=find_packages(),
   install_requires=['pillow>=10.4.0', 
-                    'openai>=1.65.1', 
+                    'openai>=1.76.0', 
                     'pyTelegramBotAPI>=4.26.0', 
                     'requests>=2.32.3', 
                     'yandex-cloud-ml-sdk>=0.4.1', 

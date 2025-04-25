@@ -9,6 +9,8 @@ from abc import abstractmethod
 from datetime import date, timedelta
 import json, os, random
 
+from simple_blogger.preprocessor.text import EmojiCleaner, MarkdownCleaner, SerialProcessor
+
 class SimplestBlogger():
     def __init__(self, builder:PostBuilder, posters:list[IPoster]):
         self.builder = builder
@@ -51,7 +53,8 @@ class Journalist(SimplestBlogger):
             generator=self._image_generator(), 
             prompt_builder=ContentBuilderPromptBuilder(
                 content_builder=message_builder
-            )
+            ),
+            prompt_processor=SerialProcessor([MarkdownCleaner(), EmojiCleaner()])
         )
         builder = PostBuilder(
             message_builder=message_builder,

@@ -21,11 +21,14 @@ class OpenAiTextGenerator(TextGenerator):
         return File(self.ext(), StringIO(text))
     
 class OpenAiImageGenerator(ImageGenerator):
-    def __init__(self, api_key_name ='OPENAI_API_KEY', model_name='dall-e-3', system_prompt=None, style_prompt=None):
+    def __init__(self, api_key_name ='OPENAI_API_KEY', model_name='dall-e-3', system_prompt=None, style_prompt=None, size="1024x1024", quality="standard", output_format="png"):
         self.api_key = os.environ.get(api_key_name)
         self.model_name=model_name
         self.system_prompt=system_prompt
         self.style_prompt=style_prompt
+        self.size=size
+        self.quality=quality
+        self.output_format=output_format
 
     def generate(self, prompt, **_):
         client = OpenAI(api_key=self.api_key)
@@ -33,12 +36,13 @@ class OpenAiImageGenerator(ImageGenerator):
         image_url = client.images.generate(
             model = self.model_name,
             prompt = prompt,
-            size = "1024x1024",
-            quality = "standard",
+            size = self.size,
+            quality = self.quality,
+            output_format = self.output_format,
             n = 1                
         ).data[0].url
         response = requests.get(image_url)
         return File(self.ext(), BytesIO(response.content))
     
     def ext(self):
-        return 'png'
+        return self.output_format
