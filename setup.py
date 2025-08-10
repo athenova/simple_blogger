@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
   name='simple_blogger',
-  version='0.2.8',
+  version='0.2.9',
   author='Aleksey Sergeyev',
   author_email='aleksey.sergeyev@yandex.com',
   description='A simple blogger library',
@@ -18,6 +18,8 @@ setup(
                     "emoji>=2.14.1",
                     'markdown>=3.7', 
                     "vk>=3.0",
+                    "gigachat>=0.1.42",
+                    "beautifulsoup4>=4.13.4",
                     # 'boto3==1.35.99', 
                     # "yandex-speechkit>=1.5.0",
                     # "moviepy>=2.1.2"
