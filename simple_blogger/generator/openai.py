@@ -4,10 +4,11 @@ from io import StringIO, BytesIO
 import os, requests, base64
 
 class OpenAiTextGenerator(TextGenerator):
-    def __init__(self, system_prompt, api_key_name ='OPENAI_API_KEY', model_name='chatgpt-4o-latest'):
+    def __init__(self, system_prompt, api_key_name ='OPENAI_API_KEY', model_name='chatgpt-4o-latest', creativity=0.5):
         super().__init__(system_prompt=system_prompt)
         self.api_key = os.environ.get(api_key_name)
         self.model_name=model_name
+        self.creativity=creativity*2
 
     def generate(self, prompt, **_):
         client = OpenAI(api_key=self.api_key)
@@ -16,7 +17,8 @@ class OpenAiTextGenerator(TextGenerator):
                     messages=[
                         { "role": "system", "content": self.system_prompt },
                         { "role": "user", "content": prompt },
-                    ]
+                    ],
+                    temperature=self.creativity
                 ).choices[0].message.content
         return File(self.ext(), StringIO(text))
     

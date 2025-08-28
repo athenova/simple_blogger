@@ -4,15 +4,17 @@ from yandex_cloud_ml_sdk import YCloudML
 import os
 
 class YandexTextGenerator(TextGenerator):
-    def __init__(self, system_prompt, folder_id=None, model_name='yandexgpt', model_version='latest'):
+    def __init__(self, system_prompt, folder_id=None, model_name='yandexgpt', model_version='latest', creativity=0.5):
         super().__init__(system_prompt=system_prompt)
         self.folder_id=folder_id or os.environ.get('YC_FOLDER_ID')
         self.model_name=model_name
         self.model_version=model_version
+        self.creativity=creativity
 
     def generate(self, prompt, **_):
         sdk = YCloudML(folder_id=self.folder_id)
         model = sdk.models.completions(model_name=self.model_name, model_version=self.model_version)
+        model.configure(temperature=self.creativity)
         text = model.run([
                         { "role": "system", "text": self.system_prompt },
                         { "role": "user", "text": prompt },

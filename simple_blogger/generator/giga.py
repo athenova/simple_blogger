@@ -5,10 +5,11 @@ from bs4 import BeautifulSoup
 import os, base64
 
 class GigaChatTextGenerator(TextGenerator):
-    def __init__(self, system_prompt, api_key_name ='GIGACHAT_CREDENTIALS', model_name='GigaChat-2'):
+    def __init__(self, system_prompt, api_key_name ='GIGACHAT_CREDENTIALS', model_name='GigaChat-2', creativity=0.5):
         super().__init__(system_prompt=system_prompt)
         self.api_key = os.environ.get(api_key_name)
         self.model_name=model_name
+        self.creativity=creativity*2
 
     def generate(self, prompt, **_):
         giga = GigaChat(
@@ -20,7 +21,8 @@ class GigaChatTextGenerator(TextGenerator):
                                 "messages": [
                                     { "role": "system", "content": f"{self.system_prompt}" },
                                     { "role": "user", "content": f"{prompt}" },
-                                ]
+                                ],
+                                "temperature": self.creativity
                             }).choices[0].message.content
         return File('txt', StringIO(text))
     
