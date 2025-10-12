@@ -14,10 +14,11 @@ class File:
         return self.file
     
     ext2ct = {
-        'jpg': 'image/jpeg',
-        'png': 'image/png',
-        'txt': 'text/plain',
-        'mp4': 'video/mp4'
+        'jpeg': 'image/jpeg',
+        'jpg' : 'image/jpeg',
+        'png' : 'image/png',
+        'txt' : 'text/plain',
+        'mp4' : 'video/mp4'
     }
 
     def get_content_type(self)->str:

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from markdown import Markdown
-import emoji
+import emoji, re
 
 class ITextProcessor(ABC):
     @abstractmethod
@@ -44,3 +44,9 @@ class TagAdder(ITextProcessor):
                 message += f"{delimiter}{tag}"
                 delimiter = ' '
         return message
+    
+class OkCleaner(ITextProcessor):        
+    def process(self, message:str)->str:
+        if re.match(r'\Aконечно|ок', message, re.IGNORECASE):
+            message = re.sub(r'\A[^.!&]+.', '', message)
+        return re.sub(r'\A\s+', '', message)
