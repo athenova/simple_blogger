@@ -12,7 +12,10 @@ class VkUploader():
         response = self.api.photos.getWallUploadServer(group_id=group_id)
         upload_url = response["upload_url"]
         files = {'photo': (f"photo.{file.ext}", file.get_file(), file.get_content_type() ) }
-        response = requests.post(url=upload_url, files=files).json()
+        for i in range(10):
+            response = requests.post(url=upload_url, files=files).json()
+            if response["server"] != '': 
+                break
         response = self.api.photos.saveWallPhoto(group_id=self.group_id
                                                 , photo=response["photo"]
                                                 , server=response["server"]
