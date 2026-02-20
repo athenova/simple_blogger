@@ -4,7 +4,7 @@ from io import StringIO, BytesIO
 import os, requests, base64
 
 class OpenAiTextGenerator(TextGenerator):
-    def __init__(self, system_prompt, api_key_name ='OPENAI_API_KEY', model_name='chatgpt-4o-latest', creativity=0.5):
+    def __init__(self, system_prompt, api_key_name ='OPENAI_API_KEY', model_name='gpt-5.1-chat-latest', creativity=0.5):
         super().__init__(system_prompt=system_prompt)
         self.api_key = os.environ.get(api_key_name)
         self.model_name=model_name
